@@ -20,7 +20,7 @@ async def key_input():
     edit = gc.ui.edit
     await ui.draw_bottom_bar()
     while True:
-        prompt = gc.client.get_prompt()
+        prompt = gc.client.prompt
         ch = editBar.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
             await asyncio.sleep(0.01)
@@ -51,7 +51,7 @@ async def typing_handler():
 
     while True:
         if gc.typingBeingHandled:
-            await gc.client.send_typing(gc.client.get_current_channel())
+            await gc.client.send_typing(gc.client.current_channel)
             await asyncio.sleep(5)
             gc.typingBeingHandled = False
         await asyncio.sleep(0.1)
@@ -79,8 +79,8 @@ async def input_handler(text):
             secs_copy = []
             for sect in sections:
                 if '@' in sect:
-                    for member in gc.client.get_current_server().members:
-                        if member is not gc.client.get_current_server().me and \
+                    for member in gc.client.current_server.members:
+                        if member is not gc.client.current_server.me and \
                                 sect[1:] in member.display_name.lower():
                             sect = "<@!" + member.id + ">"
                 sects_copy.append(sect)
@@ -88,7 +88,7 @@ async def input_handler(text):
         sent = False
         for i in range(0,3):
             try:
-                await gc.client.send_message(gc.client.get_current_channel(), text)
+                await gc.client.send_message(gc.client.current_channel, text)
                 sent = True
                 break
             except:
@@ -99,18 +99,18 @@ async def parseCommand(command, arg=None):
         server_name = ""
         server_log = None
         for servlog in gc.server_log_tree:
-            if arg.lower() in servlog.get_name().lower():
-                server_name = servlog.get_name()
+            if arg.lower() in servlog.name.lower():
+                server_name = servlog.name
                 server_log = servlog
                 break
         if server_name:
-            gc.client.set_current_server(server_name)
+            gc.client.current_server = server_name
             def_chan = ""
 
             lowest = 999
-            for chan in server_log.get_server().channels:
+            for chan in server_log.server.channels:
                 if chan.type is discord.ChannelType.text and \
-                        chan.permissions_for(server_log.get_server().me).read_messages and \
+                        chan.permissions_for(server_log.server.me).read_messages and \
                         chan.position < lowest:
                     try:
                         # Skip over ignored channels
@@ -124,9 +124,9 @@ async def parseCommand(command, arg=None):
                     lowest = chan.position
                     def_chan = chan
                 try:
-                    gc.client.set_current_channel(def_chan.name)
-                    for chanlog in servlog.get_logs():
-                        if chanlog.get_channel() is def_chan:
+                    gc.client.current_channel = def_chan.name
+                    for chanlog in servlog.logs:
+                        if chanlog.channel is def_chan:
                             chanlog.unread = False
                             chanlog.mentioned_in = False
                             break
@@ -140,17 +140,17 @@ async def parseCommand(command, arg=None):
             log("Can't find server", logging.error)
     elif command in ("channel", 'c'):
         for servlog  in gc.server_log_tree:
-            if servlog.get_server() is gc.client.get_current_server():
+            if servlog.server is gc.client.current_server:
                 final_chanlog = ""
-                for chanlog in servlog.get_logs():
-                    if arg.lower() in chanlog.get_name().lower()and \
-                            chanlog.get_channel().type is discord.ChannelType.text and \
-                            chanlog.get_channel().permissions_for(
-                                    servlog.get_server().me).read_messages:
+                for chanlog in servlog.logs:
+                    if arg.lower() in chanlog.name.lower()and \
+                            chanlog.channel.type is discord.ChannelType.text and \
+                            chanlog.channel.permissions_for(
+                                    servlog.server.me).read_messages:
                         final_chanlog = chanlog
                         break
                 if final_chanlog:
-                    gc.client.set_current_channel(final_chanlog.get_name())
+                    gc.client.current_channel = final_chanlog.name
                     final_chanlog.unread = False
                     final_chanlog.mentioned_in = False
                     gc.ui.doUpdate = True
@@ -160,11 +160,11 @@ async def parseCommand(command, arg=None):
                     log("Can't find channel", logging.error)
     elif command == "nick":
         try:
-            await gc.client.change_nickname(gc.client.get_current_server().me, arg)
+            await gc.client.change_nickname(gc.client.current_server.me, arg)
         except:
             pass
     elif command == "game":
-        await gc.client.set_game(arg)
+        gc.client.game = arg
     elif command == "file":
         await send_file(gc.client, arg)
     elif command == "status":
@@ -175,7 +175,7 @@ async def parseCommand(command, arg=None):
             status = "dnd"
 
         if status in ("online", "offline", "idle", "dnd"):
-            await gc.client.set_status(status)
+            gc.client.status = status
 
     if arg is None:
         if command == "refresh":
@@ -204,9 +204,9 @@ async def parseEmoji(text):
             if short_name in text:
                 full_name = "<:{}:{}>".format(emoji.name, emoji.id)
                 text = text.replace(short_name, full_name)
-    elif gc.client.get_current_server().emojis is not None and \
-            len(gc.client.get_current_server().emojis) > 0:
-        for emoji in gc.client.get_current_server().emojis:
+    elif gc.client.current_server.emojis is not None and \
+            len(gc.client.current_server.emojis) > 0:
+        for emoji in gc.client.current_server.emojis:
             short_name = ':' + emoji.name + ':'
             if short_name in text:
                 full_name = "<:{}:{}>".format(emoji.name, emoji.id)

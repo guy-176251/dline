@@ -182,7 +182,7 @@ class CursesUI:
         if self.displayPanel.hidden():
             self.redrawFrames()
 
-from utils.globals import gc, get_color
+from utils.globals import gc
 
 async def start_ui():
     curses.wrapper(gc.ui.run)
@@ -211,21 +211,21 @@ async def draw_top_bar():
     width = topBar.getmaxyx()[1]
     color = gc.ui.colors[settings["server_display_color"]]
 
-    serverName = gc.client.get_current_server_name()
+    serverName = gc.client.current_server.name
 
     topic = ""
     try:
-        if gc.client.get_current_channel().topic is not None:
-            topic = gc.client.get_current_channel().topic
+        if gc.client.current_channel.topic is not None:
+            topic = gc.client.current_channel.topic
         # if there is no channel topic, just print the channel name
         else:
-            topic = gc.client.get_current_channel().name
+            topic = gc.client.current_channel.name
     except: pass
     topicOffset = width//2-len(topic)//2
 
     # sleep required to get accurate user count
     await asyncio.sleep(0.05)
-    online = str(await gc.client.get_online())
+    online = str(gc.client.online)
     online_text = "Users online: " + online
     onlineOffset = width-len(online_text)-1
 
@@ -268,8 +268,8 @@ async def draw_left_bar():
     channel_logs = []
 
     for servlog in gc.server_log_tree:
-        if servlog.get_server() is gc.client.get_current_server():
-            for chanlog in servlog.get_logs():
+        if servlog.server is gc.client.current_server:
+            for chanlog in servlog.logs:
                 channel_logs.append(chanlog)
             break
 
@@ -281,8 +281,8 @@ async def draw_left_bar():
     for idx, clog in enumerate(channel_logs):
         # don't print categories or voice chats
         # TODO: this will break on private messages
-        if clog.get_channel().type != ChannelType.text: continue
-        text = clog.get_name()
+        if clog.channel.type != ChannelType.text: continue
+        text = clog.name
         length = len(text)
 
         offset = 0
@@ -295,13 +295,13 @@ async def draw_left_bar():
             else:
                 text = text[0:left_bar_width - 3 - offset] + "..."
 
-        if clog.get_channel() is gc.client.get_current_channel():
+        if clog.channel is gc.client.current_channel:
             leftBar.move(idx,0)
             if settings["number_channels"]:
                 leftBar.addstr(str(idx+1) + ". ")
             leftBar.addstr(text, gc.ui.colors[settings["current_channel_color"]])
         else:
-            if clog.get_channel() is not channel_logs[0]:
+            if clog.channel is not channel_logs[0]:
                 pass
 
             if clog.unread and settings["blink_unreads"]:
@@ -335,14 +335,14 @@ async def draw_left_bar():
 async def draw_bottom_bar():
     editBar = gc.ui.editBar
     edit = gc.ui.edit
-    promptText = gc.client.get_prompt()
+    promptText = gc.client.prompt
     offset = len(promptText)+5
 
     borderColor = gc.ui.colors[settings["prompt_border_color"]]
     hasHash = False
     hashColor = 0
     promptColor = 0
-    if gc.client.get_prompt() != settings["default_prompt"]:
+    if gc.client.prompt != settings["default_prompt"]:
         hasHash = True
         hashColor = gc.ui.colors[settings["prompt_hash_color"]]
     promptColor = gc.ui.colors[settings["prompt_color"]]
@@ -376,14 +376,14 @@ async def draw_serverlist():
 
     buf = []
     for slog in gc.server_log_tree:
-        name = slog.get_name()
+        name = slog.name
 
-        if slog.get_server() is gc.client.get_current_server():
+        if slog.server is gc.client.current_server:
             buf.append((name, gc.ui.colors[settings["current_channel_color"]]))
             continue
 
         string = ""
-        for clog in slog.get_logs():
+        for clog in slog.logs:
             if clog.mentioned_in:
                 string = (name, gc.ui.colors[settings["unread_mention_color"]])
                 break
@@ -436,7 +436,7 @@ async def draw_channellist():
         gc.ui.toggleDisplay()
         return
 
-    if len(gc.client.get_current_server().channels) == 0:
+    if len(gc.client.current_server.channels) == 0:
         display.addstr("Error: Does this server not have any channels?", gc.ui.colors["red"])
         while True:
             ch = display.getch()
@@ -448,7 +448,7 @@ async def draw_channellist():
         return
 
     buf = []
-    for channel in gc.client.get_current_server().channels:
+    for channel in gc.client.current_server.channels:
         if channel.type == ChannelType.text:
             name = channel.name
             buf.append((name, 0))
@@ -457,7 +457,7 @@ async def draw_channellist():
     while True:
         display.clear()
         display.addstr(0,0, "Available channels in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.get_current_server_name(), gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for chan_id, chan in enumerate(buf[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = chan[1]
@@ -495,12 +495,12 @@ async def draw_emojilist():
         gc.ui.toggleDisplay()
         return
 
-    server_name = gc.client.get_current_server_name()
+    server_name = gc.client.current_server.name
 
     emojis = []
     server_emojis = None
 
-    try: server_emojis = gc.client.get_current_server().emojis
+    try: server_emojis = gc.client.current_server.emojis
     except: pass
 
     if server_emojis is not None and server_emojis != "":
@@ -511,7 +511,7 @@ async def draw_emojilist():
     while True:
         display.clear()
         display.addstr(0,0, "Available emojis in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.get_current_server_name(), gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for emoji_id, emoji in enumerate(emojis[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = emoji[1]
@@ -548,7 +548,7 @@ async def draw_userlist():
         gc.ui.toggleDisplay()
         return
 
-    if len(gc.client.get_current_server().channels) == 0:
+    if len(gc.client.current_server.channels) == 0:
         display.addstr("Error: Does this server not have any channels?", gc.ui.colors["red"])
         while True:
             ch = display.getch()
@@ -565,7 +565,7 @@ async def draw_userlist():
     bots = UserList(gc.ui.colors)
     everything_else = UserList(gc.ui.colors)
 
-    for member in gc.client.get_current_server().members:
+    for member in gc.client.current_server.members:
         if member is None: continue # happens if a member left the server
 
         if member.top_role.name.lower() == "admin":
@@ -603,7 +603,7 @@ async def draw_userlist():
     while True:
         display.clear()
         display.addstr(0,0, "Members in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.get_current_server_name(), gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for user_id, user in enumerate(buf[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = user[1]
@@ -718,30 +718,30 @@ async def draw_channel_log():
     ft = None
     doBreak = False
     for server_log in gc.server_log_tree:
-        if server_log.get_server() is gc.client.get_current_server():
-            for channel_log in server_log.get_logs():
-                if channel_log.get_channel() is gc.client.get_current_channel():
-                    if channel_log.get_channel() not in gc.channels_entered:
+        if server_log.server is gc.client.current_server:
+            for channel_log in server_log.logs:
+                if channel_log.channel is gc.client.current_channel:
+                    if channel_log.channel not in gc.channels_entered:
                         await gc.client.populate_current_channel_log()
-                        gc.channels_entered.append(channel_log.get_channel())
-                        gc.ui.formattedText[channel_log.get_channel().id] = \
+                        gc.channels_entered.append(channel_log.channel)
+                        gc.ui.formattedText[channel_log.channel.id] = \
                                 FormattedText(chatWin.getmaxyx()[1], settings["max_messages"], gc.ui.colors)
-                        ft = gc.ui.formattedText[channel_log.get_channel().id]
-                        for msg in channel_log.get_logs():
+                        ft = gc.ui.formattedText[channel_log.channel.id]
+                        for msg in channel_log.logs:
                             ft.addMessage(msg)
                         doBreak = True
                         break
                     # if the server has a "category" channel named the same
                     # as a text channel, confusion will occur
                     # TODO: private messages are not "text" channeltypes
-                    if channel_log.get_channel().type != ChannelType.text: continue
+                    if channel_log.channel.type != ChannelType.text: continue
 
-                    ft = gc.ui.formattedText[channel_log.get_channel().id]
-                    if len(ft.messages) > 0 and channel_log.get_logs()[-1].id == \
+                    ft = gc.ui.formattedText[channel_log.channel.id]
+                    if len(ft.messages) > 0 and channel_log.logs[-1].id == \
                             ft.messages[-1].id:
                         doBreak = True
                         break
-                    ft.addMessage(channel_log.get_logs()[-1])
+                    ft.addMessage(channel_log.logs[-1])
                     doBreak = True
                     break
         if doBreak:
@@ -775,7 +775,7 @@ async def draw_channel_log():
         chatWin.move(idx,name_offset)
         for idy, word in enumerate(line.words):
             color = 0
-            if "@" + gc.client.get_current_server().me.display_name in word.content:
+            if "@" + gc.client.current_server.me.display_name in word.content:
                 color = gc.ui.colors[settings["mention_color"]]
             if not word.content:
                 continue

@@ -51,18 +51,18 @@ async def on_ready():
 
     # these values are set in settings.yaml
     if settings["default_prompt"] is not None:
-        gc.client.set_prompt(settings["default_prompt"].lower())
+        gc.client.prompt = settings["default_prompt"].lower()
     else:
-        gc.client.set_prompt('~')
+        gc.client.prompt = '~'
 
     if settings["default_server"] is not None:
-        gc.client.set_current_server(settings["default_server"])
+        gc.client.current_server = settings["default_server"]
         if settings["default_channel"] is not None:
-            gc.client.set_current_channel(settings["default_channel"].lower())
-            gc.client.set_prompt(settings["default_channel"].lower())
+            gc.client.current_channel = settings["default_channel"].lower()
+            gc.client.prompt = settings["default_channel"].lower()
 
     if settings["default_game"] is not None:
-        await gc.client.set_game(settings["default_game"])
+        gc.client.game = settings["default_game"]
 
     for server in gc.client.servers:
         # Null check to check server availability
@@ -116,7 +116,7 @@ async def on_message(message):
 async def on_message_edit(msg_old, msg_new):
     await gc.client.wait_until_ready()
     if msg_old.clean_content == msg_new.clean_content: return
-    channellog = gc.client.get_current_channel()
+    channellog = gc.client.current_channel
     ft = gc.ui.formattedText[channellog.id]
     msg_new.content = msg_new.content + " **(edited)**"
     idx = 0
@@ -139,11 +139,11 @@ async def on_message_delete(msg):
 
     try:
         for serverlog in gc.server_log_tree:
-            if serverlog.get_server() == msg.server:
-                for channellog in serverlog.get_logs():
-                    if channellog.get_channel() == msg.channel:
-                        ft = gc.ui.formattedText[channellog.get_channel().id]
-                        channellog.get_logs().remove(msg)
+            if serverlog.server == msg.server:
+                for channellog in serverlog.logs:
+                    if channellog.channel == msg.channel:
+                        ft = gc.ui.formattedText[channellog.channel.id]
+                        channellog.logs.remove(msg)
                         ft.messages.remove(msg)
                         ft.refresh()
                         log("Deleted, updating")
