@@ -10,11 +10,11 @@ async def on_incoming_message(msg):
     # find the server/channel it belongs to and add it
     doBreak = False
     for server_log in gc.server_log_tree:
-        if server_log.get_server() == msg.server:
-            for channel_log in server_log.get_logs():
-                if channel_log.get_channel() == msg.channel:
+        if server_log.server == msg.server:
+            for channel_log in server_log.logs:
+                if channel_log.channel == msg.channel:
                     channel_log.append(await calc_mutations(msg))
-                    if channel_log.get_channel() is not gc.client.get_current_channel():
+                    if channel_log.channel is not gc.client.current_channel:
                         if msg.server.me.mention in msg.content:
                             channel_log.mentioned_in = True
                         else:
@@ -24,5 +24,6 @@ async def on_incoming_message(msg):
         if doBreak:
             break
 
-    # redraw the screen
-    gc.ui.doUpdate = True
+    # redraw the screen if new msg is in current channel
+    if msg.channel == gc.client.current_channel:
+        gc.ui.doUpdate = True

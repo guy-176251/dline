@@ -7,7 +7,7 @@ import signal
 import logging
 import re
 import io
-from discord import MessageType
+from discord import MessageType, Member
 from utils.log import log
 from utils.settings import settings
 
@@ -31,6 +31,15 @@ async def get_role_color(r, colors):
     return color
 
 async def calc_mutations(msg):
+    for embed in msg.embeds:
+        info = "\n---\n"
+        if 'description' in embed:
+            info += embed['description']
+        elif 'title' in embed:
+            info += embed['title']
+
+        msg.content += info
+
     try: # if the message is a file, extract the discord url from it
         json = str(msg.attachments[0]).split("'")
         for string in json:
@@ -42,7 +51,7 @@ async def calc_mutations(msg):
 
     # if message is blank and message's timestamp is within a second
     # of a member's join timestamp, it's a join message
-    if not msg.content:
+    if not msg.content and type(msg.author) == Member:
         timeDiff = msg.timestamp - msg.author.joined_at
         if timedelta(seconds=-1) <= timeDiff <= timedelta(seconds=1):
             msg.content = "**({} joined the server!)**".format(msg.author.display_name)

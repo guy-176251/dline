@@ -34,6 +34,7 @@ class CursesUI:
         self.contentWins = []
 
         self.formattedText = {}
+        self.messageEdit = {}
         self.edit = None
         self.isInitialized = False
         self.areLogsRead = False
@@ -70,6 +71,11 @@ class CursesUI:
         self.topBarVisible = settings["show_top_bar"]
         self.leftBarVisible = settings["show_left_bar"]
 
+    def resize(self):
+        self.max_y, self.max_x = self.screen.getmaxyx()
+        curses.resizeterm(self.max_y,self.max_x)
+        self.edit.maxWidth = self.max_x
+
     def makeFrameWin(self):
         self.frameWin = curses.newwin(self.max_y,self.max_x, 0,0)
 
@@ -85,7 +91,7 @@ class CursesUI:
         content.keypad(True)
         content.nodelay(True)
         self.editBar = content
-        self.edit = MessageEdit(self.editBar.getmaxyx()[1])
+        #self.edit = MessageEdit(self.max_x, "general")
 
         self.contentWins.append(content)
 
@@ -334,7 +340,6 @@ async def draw_left_bar():
 
 async def draw_bottom_bar():
     editBar = gc.ui.editBar
-    edit = gc.ui.edit
     promptText = gc.client.prompt
     offset = len(promptText)+5
 
@@ -355,7 +360,10 @@ async def draw_bottom_bar():
         editBar.addstr("#", hashColor)
         editBar.addstr(promptText, promptColor)
     editBar.addstr("]: ", borderColor)
-    data = edit.getCurrentData()
+    try:
+        data = gc.ui.edit.getCurrentData()
+    except:
+        data = ('', 0)
     editBar.addstr(0,offset, data[0])
     editBar.move(0,offset+data[1])
 
@@ -723,10 +731,12 @@ async def draw_channel_log():
                 if channel_log.channel is gc.client.current_channel:
                     if channel_log.channel not in gc.channels_entered:
                         await gc.client.populate_current_channel_log()
-                        gc.channels_entered.append(channel_log.channel)
-                        gc.ui.formattedText[channel_log.channel.id] = \
-                                FormattedText(chatWin.getmaxyx()[1], settings["max_messages"], gc.ui.colors)
-                        ft = gc.ui.formattedText[channel_log.channel.id]
+                        channel = channel_log.channel
+                        gc.channels_entered.append(channel)
+                        gc.ui.formattedText[channel.id] = \
+                                FormattedText(chatWin.getmaxyx()[1], \
+                                settings["max_messages"], gc.ui.colors)
+                        ft = gc.ui.formattedText[channel.id]
                         for msg in channel_log.logs:
                             ft.addMessage(msg)
                         doBreak = True

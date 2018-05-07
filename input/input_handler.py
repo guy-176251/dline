@@ -12,12 +12,19 @@ from commands.sendfile import send_file
 from commands.channel_jump import channel_jump
 from input.messageEdit import MessageEdit
 
+async def init_channel_messageEdit(channel):
+    gc.ui.messageEdit[channel.id] = MessageEdit(gc.ui.max_x, channel.name)
+
 async def key_input():
     # if the next two aren't here, input does not work
     curses.cbreak()
     curses.noecho()
     editBar = gc.ui.editBar
-    edit = gc.ui.edit
+    try:
+        gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
+    except:
+        await init_channel_messageEdit(gc.client.current_channel)
+        gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
     await ui.draw_bottom_bar()
     while True:
         prompt = gc.client.prompt
@@ -39,11 +46,19 @@ async def key_input():
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)
             continue
+        elif ch == curses.KEY_RESIZE:
+            log(1)
+            gc.ui.resize()
+            gc.ui.doUpdate = True
+            while gc.ui.doUpdate:
+                await asyncio.sleep(0.01)
+            continue
+        log(2)
         await ui.draw_bottom_bar()
-        ret = edit.addKey(ch)
+        ret = gc.ui.edit.addKey(ch)
         if ret is not None:
             await input_handler(ret)
-            edit.reset()
+            gc.ui.edit.reset()
         await ui.draw_bottom_bar()
 
 async def typing_handler():

@@ -3,6 +3,7 @@ import curses
 import time
 from binascii import hexlify
 from utils.log import log
+from ui.ui import CursesUI
 from ui.formattedText import FormattedText
 from tests.utils import Role, User, Message
 
@@ -18,13 +19,15 @@ def formattingTest(screen):
     curses.noecho()
     screen.keypad(True)
 
+    ui = CursesUI()
+    ui.run(screen)
     user = User("mitch", Role("moderator"))
     maxyx = screen.getmaxyx()
     win = curses.newwin(maxyx[0]-2, maxyx[1]-2, 1,1)
     win.keypad(True)
     win_maxyx = win.getmaxyx()
     for f in [open("tests/test.txt", 'r'), open("tests/test2.txt", 'r')]:
-        ft = FormattedText(win_maxyx[1])
+        ft = FormattedText(win_maxyx[1], colors=ui.colors)
         win.clear()
         text_offset = 0
         contents = f.read()

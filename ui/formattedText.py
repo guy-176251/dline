@@ -69,21 +69,25 @@ class FormattedText:
 
         # Tokens grouped by type (type tokens)
         ttokens = parseText(msg.clean_content, self.colors)
+        log("ttokens: {}".format(ttokens))
         # Separate tokens by word (word tokens)
         wtokens = []
         for tok_id, ttoken in enumerate(ttokens):
-            # if '\n' is in segment but not JUST '\n'
-            if ttoken[0] != '\n' and '\n' in ttoken[0] and len(ttoken[0]) < width:
-                # Split ttoken into lines
+            # handle newlines
+            if '\n' in ttoken[0] and ttoken[0] != '\n' and \
+                    ttoken[0].count('\n') > 1:
                 lines = ttoken[0].splitlines()
-                for line_id, line in enumerate(lines):
-                    # Only split line into words if it's not code
+                if not lines[0]: # if first line is empty
+                    wtokens.append(('\n', curses.A_NORMAL))
+                    del lines[0]
+                for lineid, line in enumerate(lines):
                     if ttoken[1] != curses.A_REVERSE:
                         for word in line.split(' '):
                             wtokens.append((word, ttoken[1]))
                     else:
-                        wtokens.append((line, ttoken[1]))
-                    wtokens.append(('\n', curses.A_NORMAL))
+                        wtokens.append((line, curses.A_REVERSE))
+                    if lineid != len(lines)-1 or (lineid == len(lines)-1 and ttoken[0].endswith('\n')):
+                        wtokens.append(('\n', curses.A_NORMAL))
                 continue
             words = ttoken[0].split(' ')
             for idx, word in enumerate(words):
@@ -104,6 +108,7 @@ class FormattedText:
                             wtokens.append((rng, ttoken[1]))
                     continue
                 wtokens.append((word, ttoken[1]))
+        log("wtokens: {}".format(wtokens))
         cpos = 0
         line = Line(True, name, topRole)
         ltokens = []
@@ -112,10 +117,17 @@ class FormattedText:
             if cpos > width or wtoken[0] == '\n':
                 ltokens.append(line)
                 line = Line()
-                cpos = 0
+                line.add(TokenContainer(wtoken[0].rstrip(), wtoken[1]))
+                cpos = len(wtoken[0])+1
                 continue
             line.add(TokenContainer(wtoken[0].rstrip(), wtoken[1]))
             if idx == len(wtokens)-1:
                 ltokens.append(line)
+        # TODO: Remove
+        for idx, ltoken in enumerate(ltokens):
+            buf = []
+            for word in ltoken.words:
+                buf.append(word.content)
+            log("ltokens[{}] content: {}".format(idx, buf))
         mc = MessageContainer(name, ltokens)
         self.messageBuffer.append(mc)

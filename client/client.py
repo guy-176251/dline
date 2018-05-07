@@ -2,6 +2,7 @@ from utils.log import log
 import discord
 from utils.globals import gc
 from utils.settings import settings
+from input.input_handler import init_channel_messageEdit
 from ui.ui_utils import calc_mutations
 
 # inherits from discord.py's Client
@@ -38,6 +39,10 @@ class Client(discord.Client):
         return self._current_channel
     @current_channel.setter
     def current_channel(self, channel):
+        try:
+            gc.ui.edit = gc.ui.messageEdit[channel.id]
+        except:
+            init_channel_messageEdit(channel)
         self._current_channel = channel
         if type(channel) is str:
             for svr in self.servers:
@@ -126,7 +131,3 @@ class Client(discord.Client):
                             # needed for modification of past messages
                             self.messages.append(msg)
                             clog.insert(0, await calc_mutations(msg))
-
-    # because the built-in .say is really buggy, just overriding it with my own
-    async def say(self, string):
-        await self.send_message(self.get_current_channel(), string)

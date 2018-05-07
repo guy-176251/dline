@@ -62,13 +62,20 @@ def rectifyText(obj):
 
 def parseText(msg, colors):
     spanTokens = []
+    shrugPresent = False
+    # code really should only have ascii in it
+    if "¯\_(ツ)_/¯" in msg:
+        shrugPresent = True
     # Needed for the markdown to parse correctly
     msg = StringIO(rectifyText(msg))
     doc = Document(msg)
     blockTokens = doc.children
     # FIXME: BlankLine sometimes at beginning of tokens
-    if blockTokens[0].__class__.__name__ == "BlankLine":
-        blockTokens = blockTokens[1:]
+    try:
+        if blockTokens[0].__class__.__name__ == "BlankLine":
+            blockTokens = blockTokens[1:]
+    except:
+        return [('(Unknown)', curses.A_BOLD)]
     for tokid, blockToken in enumerate(blockTokens):
         # These are blockToken objects
         # A blockToken object has a LIST of children
@@ -106,6 +113,9 @@ def parseText(msg, colors):
                     attrs = curses.A_REVERSE
                 spanTokens.append((child.children[0].content, attrs))
             elif className == "RawText":
+                if shrugPresent and child.content.startswith('¯'):
+                    spanTokens.append(("¯\_(ツ)_/¯", curses.A_NORMAL))
+                    return spanTokens
                 spanTokens.append((child.content, curses.A_NORMAL))
             else:
                 log("We shouldn't be here")
@@ -124,9 +134,6 @@ class Document(BlockToken):
 
 def tokenize_inner(content):
     return spanTokenize(content, token_types, RawText)
-
-def return_whole_group(match_obj):
-    return next(group for group in (match_obj.group(), None) if group is not None)
 
 class URL(SpanToken):
     """

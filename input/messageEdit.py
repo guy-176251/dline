@@ -2,8 +2,9 @@ import curses
 
 class MessageEdit:
     SCROLL = 20
-    def __init__(self, maxWidth):
-        self.maxWidth = maxWidth
+    def __init__(self, termWidth, channelName):
+        self.channelName = channelName
+        self.maxWidth = termWidth - len(channelName) - 5
         self.offset = 0
         self.curPos = 0
         self.inputBuffer = []
