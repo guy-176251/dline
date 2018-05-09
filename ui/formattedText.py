@@ -69,7 +69,7 @@ class FormattedText:
 
         # Tokens grouped by type (type tokens)
         ttokens = parseText(msg.clean_content, self.colors)
-        log("ttokens: {}".format(ttokens))
+        #log("ttokens: {}".format(ttokens))
         # Separate tokens by word (word tokens)
         wtokens = []
         for tok_id, ttoken in enumerate(ttokens):
@@ -108,7 +108,7 @@ class FormattedText:
                             wtokens.append((rng, ttoken[1]))
                     continue
                 wtokens.append((word, ttoken[1]))
-        log("wtokens: {}".format(wtokens))
+        #log("wtokens: {}".format(wtokens))
         cpos = 0
         line = Line(True, name, topRole)
         ltokens = []
@@ -123,11 +123,5 @@ class FormattedText:
             line.add(TokenContainer(wtoken[0].rstrip(), wtoken[1]))
             if idx == len(wtokens)-1:
                 ltokens.append(line)
-        # TODO: Remove
-        for idx, ltoken in enumerate(ltokens):
-            buf = []
-            for word in ltoken.words:
-                buf.append(word.content)
-            log("ltokens[{}] content: {}".format(idx, buf))
         mc = MessageContainer(name, ltokens)
         self.messageBuffer.append(mc)

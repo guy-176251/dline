@@ -73,20 +73,45 @@ class CursesUI:
 
     def resize(self):
         self.max_y, self.max_x = self.screen.getmaxyx()
-        curses.resizeterm(self.max_y,self.max_x)
+        self.clearWins()
+        self.makeFrameWin(resize=True)
+        self.makeTopBar(resize=True)
+        self.makeBottomBar(resize=True)
+        self.makeLeftBar(resize=True)
+        self.makeChatWin(resize=True)
+        self.makeDisplay(resize=True)
         self.edit.maxWidth = self.max_x
+        # update formattedText upon channel switch
+        self.formattedText[gc.client.current_channel.id].refresh(
+                newWidth=self.chatWin.getmaxyx()[1])
+        self.redrawFrames()
 
-    def makeFrameWin(self):
+    def clearWins(self):
+        self.frameWin.clear()
+        for win in self.contentWins:
+            win.clear()
+
+    def makeFrameWin(self, resize=False):
+        if resize:
+            self.frameWin.resize(self.max_y,self.max_x)
+            return
         self.frameWin = curses.newwin(self.max_y,self.max_x, 0,0)
 
-    def makeTopBar(self):
+    def makeTopBar(self, resize=False):
+        if resize:
+            self.topBar.resize(1,self.max_x)
+            return
         content = curses.newwin(1,self.max_x, 0,0)
         self.topBar = content
         self.topBar.leaveok(True)
 
         self.contentWins.append(content)
 
-    def makeBottomBar(self):
+    def makeBottomBar(self, resize=False):
+        if resize:
+            self.editBar.resize(1,self.max_x)
+            self.editBar.mvwin(self.max_y-1,0)
+            return
         content = curses.newwin(1,self.max_x, self.max_y-1,0)
         content.keypad(True)
         content.nodelay(True)
@@ -95,20 +120,23 @@ class CursesUI:
 
         self.contentWins.append(content)
 
-    def makeLeftBar(self):
+    def makeLeftBar(self, resize=False):
         # Bar has 2 elements: frame and content pad
         width = self.leftBarWidth
         y_offset = 0
         if self.topBarVisible:
             y_offset = 2
 
+        if resize:
+            self.leftBar.resize(self.max_y-y_offset-2,width-1)
+            return
         content = curses.newwin(self.max_y-y_offset-2,width-1, y_offset,0)
         self.leftBar = content
         self.leftBar.leaveok(True)
 
         self.contentWins.append(content)
 
-    def makeChatWin(self):
+    def makeChatWin(self, resize=False):
         x_offset = 0;width = 0
         if settings["show_left_bar"]:
             x_offset = self.leftBarWidth+1
@@ -117,11 +145,17 @@ class CursesUI:
         if settings["show_top_bar"]:
             y_offset = 2
 
+        if resize:
+            self.chatWin.resize(self.max_y-y_offset-2,width)
+            return
         content = curses.newwin(self.max_y-y_offset-2,width, y_offset,x_offset)
         self.chatWin = content
         self.chatWin.leaveok(True)
 
-    def makeDisplay(self):
+    def makeDisplay(self, resize=False):
+        if resize:
+            self.displayWin.resize(self.max_y,self.max_x)
+            return
         self.displayWin = curses.newwin(self.max_y,self.max_x, 0,0)
         self.displayWin.keypad(True)
         self.displayWin.leaveok(True)

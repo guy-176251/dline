@@ -47,13 +47,11 @@ async def key_input():
                 await asyncio.sleep(0.01)
             continue
         elif ch == curses.KEY_RESIZE:
-            log(1)
             gc.ui.resize()
             gc.ui.doUpdate = True
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)
             continue
-        log(2)
         await ui.draw_bottom_bar()
         ret = gc.ui.edit.addKey(ch)
         if ret is not None:
