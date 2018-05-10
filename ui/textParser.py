@@ -130,10 +130,11 @@ class Document(BlockToken):
         self.footnotes = {}
         # Document tokens have immediate access to first-level block tokens.
         # Useful for footnotes, etc.
-        self._children = tuple(blockTokenize(lines, [CodeFence, Paragraph, BlankLine], root=self))
+        self._children = tuple(blockTokenize(lines, [CodeFence, Paragraph, BlankLine, BlockToken], root=self))
 
 def tokenize_inner(content):
-    return spanTokenize(content, token_types, RawText)
+    #return spanTokenize(content, token_types, RawText)
+    return spanTokenize(content, token_types)
 
 class URL(SpanToken):
     """
@@ -176,4 +177,4 @@ class Paragraph(_Paragraph):
         content = ''.join(lines)
         BlockToken.__init__(self, content, tokenize_inner)
 
-token_types = [URL, Underlined, StrongEmphasis, Strong, Emphasis, InlineCode]
+token_types = [URL, Underlined, StrongEmphasis, Strong, Emphasis, InlineCode, RawText]

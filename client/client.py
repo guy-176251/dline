@@ -51,8 +51,14 @@ class Client(discord.Client):
                         if channel == chl.name:
                             self._current_channel = chl
                             self._prompt = channel
+                            if len(gc.channels_entered) > 0:
+                                gc.ui.formattedText[chl.id].refresh(
+                                        newWidth=gc.ui.chatWin.getmaxyx()[1])
                             return
         self._prompt = channel.name
+        if len(gc.channels_entered) > 0:
+            gc.ui.formattedText[channel.id].refresh(
+                    newWidth=gc.ui.chatWin.getmaxyx()[1])
 
     @property
     def current_server_log(self):

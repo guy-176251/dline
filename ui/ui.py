@@ -116,7 +116,6 @@ class CursesUI:
         content.keypad(True)
         content.nodelay(True)
         self.editBar = content
-        #self.edit = MessageEdit(self.max_x, "general")
 
         self.contentWins.append(content)
 
