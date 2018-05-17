@@ -7,7 +7,7 @@ async def is_typing_handler():
     if not settings["send_is_typing"]: return
 
     is_typing = False
-    while True:
+    while not gc.doExit:
         # if typing a message, display '... is typing'
         if not is_typing:
             if len(gc.input_buffer) > 0 and gc.input_buffer[0] is not settings["prefix"]:

@@ -12,7 +12,7 @@ from commands.sendfile import send_file
 from commands.channel_jump import channel_jump
 from input.messageEdit import MessageEdit
 
-async def init_channel_messageEdit(channel):
+def init_channel_messageEdit(channel):
     gc.ui.messageEdit[channel.id] = MessageEdit(gc.ui.max_x, channel.name)
 
 async def key_input():
@@ -23,10 +23,10 @@ async def key_input():
     try:
         gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
     except:
-        await init_channel_messageEdit(gc.client.current_channel)
+        init_channel_messageEdit(gc.client.current_channel)
         gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
     await ui.draw_bottom_bar()
-    while True:
+    while not gc.doExit:
         prompt = gc.client.prompt
         ch = editBar.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
@@ -58,16 +58,25 @@ async def key_input():
             await input_handler(ret)
             gc.ui.edit.reset()
         await ui.draw_bottom_bar()
+    log("key_input finished")
+    gc.tasksExited += 1
 
 async def typing_handler():
     if not settings["send_is_typing"]: return
 
-    while True:
+    while not gc.doExit:
         if gc.typingBeingHandled:
             await gc.client.send_typing(gc.client.current_channel)
-            await asyncio.sleep(5)
+            for second in range(50):
+                if gc.doExit:
+                    break
+                await asyncio.sleep(0.1)
             gc.typingBeingHandled = False
+            if gc.doExit:
+                break
         await asyncio.sleep(0.1)
+    log("typing_handler finished")
+    gc.tasksExited += 1
 
 async def input_handler(text):
     # Must be a command
@@ -177,7 +186,7 @@ async def parseCommand(command, arg=None):
         except:
             pass
     elif command == "game":
-        gc.client.game = arg
+        await gc.client.set_game(arg)
     elif command == "file":
         await send_file(gc.client, arg)
     elif command == "status":
@@ -196,7 +205,9 @@ async def parseCommand(command, arg=None):
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)
             log("Manual update done", logging.info)
-        elif command in ("quit", "exit"): kill()
+        elif command in ("quit", "exit"):
+            try: gc.tasks.append(asyncio.get_event_loop().create_task(kill()))
+            except SystemExit: pass
         elif command in ("help", 'h'): await ui.draw_help()
         elif command in ("servers", "servs"): await ui.draw_serverlist()
         elif command in ("channels", "chans"): await ui.draw_channellist()

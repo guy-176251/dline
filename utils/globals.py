@@ -1,6 +1,6 @@
-from sys import exit
 from blessings import Terminal
 from utils.settings import settings
+from utils.log import log
 from ui.ui import CursesUI
 import sys
 
@@ -19,6 +19,9 @@ class GlobalsContainer:
         self.server_log_tree = []
         self.channels_entered = []
         self.typingBeingHandled = False
+        self.doExit = False
+        self.tasks = []
+        self.tasksExited = 0
 
     def initClient(self):
         from client.client import Client
@@ -31,18 +34,14 @@ class GlobalsContainer:
 gc = GlobalsContainer()
 
 # kills the program and all its elements gracefully
-def kill():
+async def kill():
     # attempt to cleanly close our loops
     import asyncio
-    try: gc.client.close()
-    except: pass
-    try: asyncio.get_event_loop().close()
-    except: pass
-    try:# since we're exiting, we can be nice and try to clear the screen
-        from os import system
-        system("clear")
-    except: pass
-    exit()
+    from os import system
+    gc.doExit = True
+    while gc.tasksExited < 3:
+        await asyncio.sleep(0.01)
+    sys.exit(0) #return us to main()
 
 # returns a "Channel" object from the given string
 async def string2channel(channel):

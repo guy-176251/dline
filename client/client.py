@@ -4,6 +4,7 @@ from utils.globals import gc
 from utils.settings import settings
 from input.input_handler import init_channel_messageEdit
 from ui.ui_utils import calc_mutations
+from ui.ui import init_channel_formattedText
 
 # inherits from discord.py's Client
 class Client(discord.Client):
@@ -39,10 +40,6 @@ class Client(discord.Client):
         return self._current_channel
     @current_channel.setter
     def current_channel(self, channel):
-        try:
-            gc.ui.edit = gc.ui.messageEdit[channel.id]
-        except:
-            init_channel_messageEdit(channel)
         self._current_channel = channel
         if type(channel) is str:
             for svr in self.servers:
@@ -52,11 +49,22 @@ class Client(discord.Client):
                             self._current_channel = chl
                             self._prompt = channel
                             if len(gc.channels_entered) > 0:
-                                gc.ui.formattedText[chl.id].refresh(
-                                        newWidth=gc.ui.chatWin.getmaxyx()[1])
+                                if chl.id in gc.ui.messageEdit:
+                                    gc.ui.edit = gc.ui.messageEdit[chl.id]
+                                else:
+                                    init_channel_messageEdit(chl)
+                                if chl.id in gc.ui.formattedText:
+                                    gc.ui.formattedText[chl.id].refresh(
+                                            newWidth=gc.ui.chatWin.getmaxyx()[1])
+                                else:
+                                    init_channel_formattedText(chl.id)
                             return
         self._prompt = channel.name
         if len(gc.channels_entered) > 0:
+            if channel.id in gc.ui.messageEdit:
+                gc.ui.edit = gc.ui.messageEdit[channel.id]
+            else:
+                init_channel_messageEdit(channel)
             gc.ui.formattedText[channel.id].refresh(
                     newWidth=gc.ui.chatWin.getmaxyx()[1])
 
@@ -88,8 +96,8 @@ class Client(discord.Client):
     @property
     def game(self):
         return self._game
-    @game.setter
-    async def game(self, game):
+    
+    async def set_game(self, game):
         self._game = discord.Game(name=game,type=0)
         self._status = discord.Status.online
         # Note: the 'afk' kwarg handles how the client receives messages, (rates, etc)
@@ -123,6 +131,10 @@ class Client(discord.Client):
         else:
             try: await self.change_presence(status=self._status, afk=False)
             except: pass
+
+    async def send_typing(self, channel):
+        if channel.permissions_for(self.current_server.me).send_messages:
+            await super().send_typing(channel)
 
     async def populate_current_channel_log(self):
         slog = self.current_server_log

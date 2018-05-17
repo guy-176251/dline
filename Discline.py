@@ -62,7 +62,7 @@ async def on_ready():
             gc.client.prompt = settings["default_channel"].lower()
 
     if settings["default_game"] is not None:
-        gc.client.game = settings["default_game"]
+        await gc.client.set_game(settings["default_game"])
 
     for server in gc.client.servers:
         # Null check to check server availability
@@ -121,6 +121,8 @@ async def on_message_edit(msg_old, msg_new):
     msg_new.content = msg_new.content + " **(edited)**"
     idx = 0
     while True:
+        if len(ft.messages) >= idx:
+            break
         if ft.messages[idx].id == msg_old.id:
             ft.messages[idx].content = msg_new.content
             break
@@ -209,17 +211,19 @@ def main():
     try: gc.client.run(token, bot=False)
     except KeyboardInterrupt: pass
     except SystemExit: pass
+    try:
+        gc.client.close()
+    except:
+        pass
+    try:
+        asyncio.get_event_loop().close()
+    except:
+        pass
 
+    # if we are here, the client's loop was cancelled or errored, or user exited
     curses.nocbreak()
     gc.ui.screen.keypad(False)
     curses.echo()
     curses.endwin()
-
-    # if we are here, the client's loop was cancelled or errored, or user exited
-    try: kill()
-    except:
-        # if our cleanly-exit kill function failed for whatever reason,
-        # make sure we at least exit uncleanly
-        quit()
 
 if __name__ == "__main__": main()

@@ -180,7 +180,7 @@ class CursesUI:
     def waitUntilUserExit(self):
         self.makeFrameWin()
         self.makeDisplay()
-        self.leftBarWidth = self.max_x // settings["left_bar_divider"]
+        self.leftBarWidth = int(self.max_x // settings["left_bar_divider"])
         if self.topBarVisible:
             self.makeTopBar()
         self.makeBottomBar()
@@ -228,7 +228,7 @@ async def start_ui():
 
 async def draw_screen():
     gc.ui.doUpdate = True
-    while True:
+    while not gc.doExit:
         if not gc.ui.isInitialized:
             await asyncio.sleep(0.01)
             continue
@@ -244,6 +244,8 @@ async def draw_screen():
             await draw_channel_log()
         await draw_bottom_bar()
         gc.ui.doUpdate = False
+    log("draw_screen finished")
+    gc.tasksExited += 1
 
 async def draw_top_bar():
     topBar = gc.ui.topBar
@@ -753,6 +755,11 @@ async def draw_help():
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     gc.ui.doUpdate = True
+
+def init_channel_formattedText(channel_id):
+    gc.ui.formattedText[channel_id] = \
+            FormattedText(gc.ui.chatWin.getmaxyx()[1], \
+            settings["max_messages"], gc.ui.colors)
 
 async def draw_channel_log():
     chatWin = gc.ui.chatWin
