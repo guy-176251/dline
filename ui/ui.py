@@ -815,7 +815,7 @@ async def draw_channel_log():
         if line.isFirst:
             author_color = await get_role_color(line.topRole, gc.ui.colors)
             chatWin.addstr(idx,0, line.user + ": ", author_color)
-            name_offset = len(line.user) + 2
+            name_offset = chatWin.getyx()[1]
         elif name_offset == 0:
             # if line is at the top and it's not a "user" line
             for subline in reversed(lines[0:gc.ui.channel_log_offset]):

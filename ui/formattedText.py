@@ -1,7 +1,18 @@
 from utils.log import log
 import curses
 from collections import deque
+import unicodedata
 from ui.textParser import parseText
+
+def findWidth(s):
+    width = 0
+    for c in s:
+        w = unicodedata.east_asian_width(c)
+        if w in ('N', 'Na', 'H', 'A'):
+            width += 1
+        else:
+            width += 2
+    return width
 
 class TokenContainer:
     def __init__(self, content, attrs):
@@ -64,7 +75,7 @@ class FormattedText:
         topRole = ""
         if msg.author.__class__.__name__ == "Member":
             topRole = msg.author.top_role.name.lower()
-        offset = len(name)+2
+        offset = findWidth(name)+2
         width = self.width-offset
 
         # Tokens grouped by type (type tokens)
@@ -108,7 +119,7 @@ class FormattedText:
                             wtokens.append((rng, ttoken[1]))
                     continue
                 wtokens.append((word, ttoken[1]))
-        #log("wtokens: {}".format(wtokens))
+        log("wtokens: {}".format(wtokens))
         cpos = 0
         line = Line(True, name, topRole)
         ltokens = []
