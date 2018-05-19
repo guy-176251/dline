@@ -262,6 +262,8 @@ async def draw_top_bar():
         else:
             topic = gc.client.current_channel.name
     except: pass
+    if len(topic) >= width//2:
+        topic = topic[:width//2-3] + "..."
     topicOffset = width//2-len(topic)//2
 
     # sleep required to get accurate user count
@@ -349,7 +351,7 @@ async def draw_left_bar():
                 color = settings["unread_channel_color"]
                 if "blink_" in color:
                     split = color.split("blink_")[1]
-                    color = gc.ui.colors[split]
+                    color = gc.ui.colors[split]|curses.A_BLINK
                 elif "on_" in color:
                     color = gc.ui.colors[color.split("on_")[1]]
                 leftBar.addstr(idx,0, text, color)
@@ -428,10 +430,22 @@ async def draw_serverlist():
         string = ""
         for clog in slog.logs:
             if clog.mentioned_in:
-                string = (name, gc.ui.colors[settings["unread_mention_color"]])
+                attrs = curses.A_NORMAL
+                color = settings["unread_mention_color"]
+                if 'blink' in settings["unread_mention_color"]:
+                    if settings["blink_mentions"]:
+                        attrs = curses.A_BLINK
+                    color = color.split('blink_')[1]
+                string = (name, gc.ui.colors[color]|attrs)
                 break
             elif clog.unread:
-                string = (name, gc.ui.colors[settings["unread_channel_color"]])
+                attrs = curses.A_NORMAL
+                color = settings["unread_channel_color"]
+                if 'blink' in settings["unread_channel_color"]:
+                    if settings["blink_unreads"]:
+                        attrs = curses.A_BLINK
+                    color = color.split('blink_')[1]
+                string = (name, gc.ui.colors[color]|attrs)
                 break
 
         if string == "":

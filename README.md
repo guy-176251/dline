@@ -5,18 +5,16 @@
 
 __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support for Windows comes back
 
-**NOTE**: A total rewrite of Discline in curses/ncurses is underway!
-
 ## How to use:
 -------------------------
 
 1. Install the dependencies:
 
-    `sudo pip3 install asyncio discord blessings pyyaml mistletoe`
+    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe`
 
 2. Clone the repo
 
-    `git clone https://github.com/MitchWeaver/Discline`
+    `git clone https://github.com/NatTupper/Discline`
 
 3. Find your discord "token"
 
@@ -100,7 +98,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 2. Install `pip3`, normally called `python3-pip` in package managers
 3. Download the dependencies using pip with the following command:
 
-    `sudo pip3 install asyncio discord blessings pyyaml mistletoe`
+    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe`
 
 
 ### Color Customization
@@ -225,16 +223,6 @@ It can even be configured to hide most elements of the UI in the config:
 
 ### Known Bugs
 --------------------------
-
-> Line wrapping sometimes doesn't work
-
-This happens if there is too much formatting / coloring being done to the
-message that contains that line. I'm looking for a work around.
-
-> When I type many lines before hitting send, the UI sometimes bugs out
-and/or the separators encroach upon different sections
-
-Known. Looking for a work around.
 
 > My bug isn't listed here, how can I voice my problem?
 
