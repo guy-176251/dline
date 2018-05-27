@@ -119,7 +119,7 @@ class FormattedText:
                             wtokens.append((rng, ttoken[1]))
                     continue
                 wtokens.append((word, ttoken[1]))
-        log("wtokens: {}".format(wtokens))
+        #log("wtokens: {}".format(wtokens))
         cpos = 0
         line = Line(True, name, topRole)
         ltokens = []

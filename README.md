@@ -1,9 +1,12 @@
 # ![logo_small.png](res/logo/logo_small.png) Discline
+![status-mostly%20working-green.svg](https://img.shields.io/badge/status-mostly%20working-green.svg)
 ------------------------------
 
 ![screenshot_main.png](res/screenshots/screenshot_main.png)
 
 __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support for Windows comes back
+
+**Note**: You can find proposed features on my [website](http://natosaka.host/discline.html).
 
 ## How to use:
 -------------------------

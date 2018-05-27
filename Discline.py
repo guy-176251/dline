@@ -21,7 +21,7 @@ from utils.globals import *
 from utils.settings import copy_skeleton, settings
 from utils.updates import check_for_updates
 from utils.token_utils import get_token, store_token
-from utils.log import startLogging
+from utils.log import startLogging, msglog
 from client.serverlog import ServerLog
 from client.channellog import ChannelLog
 from client.on_message import on_incoming_message
@@ -110,6 +110,7 @@ async def on_ready():
 async def on_message(message):
     await gc.client.wait_until_ready()
     if init_complete:
+        msglog(message)
         await on_incoming_message(message)
 
 @gc.client.event

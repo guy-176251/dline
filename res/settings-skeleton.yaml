@@ -66,6 +66,8 @@ number_channels: false
 # the amount of lines to scroll up/down on each trigger
 scroll_lines: 3
 
+message_log: false
+
 # ---------------- COLOR SETTINGS ------------------------------------ #
 # Available colors are: "white", "red", "blue", "black"
 #                       "green", "yellow", "cyan", "magenta"

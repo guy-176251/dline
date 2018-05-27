@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from utils.settings import settings
 
 def startLogging():
@@ -13,3 +14,20 @@ def startLogging():
 def log(msg, func=logging.info):
     if settings["debug"]:
         func(msg)
+
+def msglog(message):
+    try:
+        if not settings['message_log']:
+            return
+    except:
+        return
+    server_name = message.server.name.replace('/','_')
+    channel_name = message.channel.name
+    author_name = message.author.display_name
+    content = message.clean_content
+    date_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    dirpath = "~/.config/Discline/logs/" + server_name
+
+    os.makedirs(os.path.expanduser(dirpath), exist_ok=True)
+    with open("{}/{}.log".format(os.path.expanduser(dirpath), channel_name), 'a') as f:
+        f.write("{} {}: {}\n".format(date_time, author_name, content))
