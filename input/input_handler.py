@@ -200,7 +200,7 @@ async def parseCommand(command, arg=None):
             gc.client.status = status
 
     if arg is None:
-        if command == "refresh":
+        if command in ("refresh", "update"):
             gc.ui.doUpdate = True
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)

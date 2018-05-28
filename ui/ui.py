@@ -338,10 +338,10 @@ async def draw_left_bar():
             else:
                 text = text[0:left_bar_width - 3 - offset] + "..."
 
+        leftBar.move(idx,0)
+        if settings["number_channels"]:
+            leftBar.addstr(str(idx+1) + ". ")
         if clog.channel is gc.client.current_channel:
-            leftBar.move(idx,0)
-            if settings["number_channels"]:
-                leftBar.addstr(str(idx+1) + ". ")
             leftBar.addstr(text, gc.ui.colors[settings["current_channel_color"]])
         else:
             if clog.channel is not channel_logs[0]:
@@ -354,18 +354,14 @@ async def draw_left_bar():
                     color = gc.ui.colors[split]|curses.A_BLINK
                 elif "on_" in color:
                     color = gc.ui.colors[color.split("on_")[1]]
-                leftBar.addstr(idx,0, text, color)
+                leftBar.addstr(text, color)
             elif clog.mentioned_in and settings["blink_mentions"]:
                 color = settings["unread_mention_color"]
                 if "blink_" in color:
                     color = gc.ui.colors[color.split("blink_")[1]]
-                elif "on_" in color:
-                    color = gc.ui.colors[color.split("on_")[1]]
-                leftBar.addstr(idx,0, text, color)
-            elif settings["number_channels"]:
-                leftBar.addstr(idx,0, str(idx+1) + ". " + text)
+                leftBar.addstr(text, color)
             else:
-                leftBar.addstr(idx,0, text)
+                leftBar.addstr(text)
 
         # should the server have *too many channels!*, stop them
         # from spilling over the screen
@@ -784,15 +780,8 @@ async def draw_channel_log():
             for channel_log in server_log.logs:
                 if channel_log.channel is gc.client.current_channel:
                     if channel_log.channel not in gc.channels_entered:
-                        await gc.client.populate_current_channel_log()
-                        channel = channel_log.channel
-                        gc.channels_entered.append(channel)
-                        gc.ui.formattedText[channel.id] = \
-                                FormattedText(chatWin.getmaxyx()[1], \
-                                settings["max_messages"], gc.ui.colors)
-                        ft = gc.ui.formattedText[channel.id]
-                        for msg in channel_log.logs:
-                            ft.addMessage(msg)
+                        await gc.client.init_channel()
+                        ft = gc.ui.formattedText[channel_log.channel.id]
                         doBreak = True
                         break
                     # if the server has a "category" channel named the same
@@ -805,7 +794,8 @@ async def draw_channel_log():
                             ft.messages[-1].id:
                         doBreak = True
                         break
-                    ft.addMessage(channel_log.logs[-1])
+                    if len(channel_log.logs) > 0:
+                        ft.addMessage(channel_log.logs[-1])
                     doBreak = True
                     break
         if doBreak:
@@ -824,6 +814,9 @@ async def draw_channel_log():
         gc.ui.channel_log_offset = 0
     color = 0
     chatWin.clear()
+    if not len(lines):
+        chatWin.refresh()
+        return
     for idx, line in enumerate(
             lines[gc.ui.channel_log_offset:gc.ui.channel_log_offset+chatWin_height]):
         if line.isFirst:

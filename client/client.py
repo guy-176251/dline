@@ -4,6 +4,7 @@ from utils.globals import gc
 from utils.settings import settings
 from input.input_handler import init_channel_messageEdit
 from ui.ui_utils import calc_mutations
+from ui.formattedText import FormattedText
 from ui.ui import init_channel_formattedText
 
 # inherits from discord.py's Client
@@ -136,16 +137,32 @@ class Client(discord.Client):
         if channel.permissions_for(self.current_server.me).send_messages:
             await super().send_typing(channel)
 
-    async def populate_current_channel_log(self):
-        slog = self.current_server_log
-        for idx, clog in enumerate(slog.logs):
-            if clog.channel.type is discord.ChannelType.text:
-                if clog.channel.name.lower() == self._current_channel.name.lower():
-                    if clog.channel.permissions_for(slog.server.me).read_messages:
-                        async for msg in self.logs_from(clog.channel,
-                                limit=settings["max_log_entries"]):
-                            if msg.edited_timestamp is not None:
-                                msg.content += " **(edited)**"
-                            # needed for modification of past messages
-                            self.messages.append(msg)
-                            clog.insert(0, await calc_mutations(msg))
+    async def init_channel(self, channel=None):
+        doBreak = False
+        clog = None
+        if channel is None:
+            clog = self.current_channel_log
+        else:
+            for svrlog in gc.server_log_tree:
+                for chllog in svrlog.logs:
+                    if chllog.channel == channel:
+                        clog = chllog
+                        doBreak = True
+                        break
+                if doBreak:
+                    break
+        if clog.channel.type is discord.ChannelType.text and \
+                clog.channel.permissions_for(clog.server.me).read_messages:
+            async for msg in self.logs_from(clog.channel,
+                    limit=settings["max_log_entries"]):
+                if msg.edited_timestamp is not None:
+                    msg.content += " **(edited)**"
+                # needed for modification of past messages
+                self.messages.append(msg)
+                clog.insert(0, await calc_mutations(msg))
+            gc.channels_entered.append(clog.channel)
+            gc.ui.formattedText[clog.channel.id] = \
+                    FormattedText(gc.ui.chatWin.getmaxyx()[1], \
+                    settings["max_messages"], gc.ui.colors)
+            for msg in clog.logs:
+                gc.ui.formattedText[clog.channel.id].addMessage(msg)

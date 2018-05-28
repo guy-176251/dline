@@ -158,6 +158,7 @@ async def on_message_delete(msg):
         # (happens when multiple calls get excecuted within the same time)
         # or the user was banned, (in which case all their msgs disappear)
         pass
+    log("Could not delete message: {}".format(msg.clean_content))
 
 def runTest(test):
     # input_handler.py
