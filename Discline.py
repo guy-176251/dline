@@ -175,7 +175,7 @@ def main():
     # start the client coroutine
     if settings and settings["debug"]:
         startLogging()
-    TOKEN=""
+    token = None
     try:
         if sys.argv[1] == "--help" or sys.argv[1] == "-h":
             draw_help()
@@ -183,6 +183,13 @@ def main():
         elif sys.argv[1] == "--token" or sys.argv[1] == "--store-token":
             store_token()
             quit()
+        elif len(sys.argv) == 3 and sys.argv[1] == "--token-path":
+            try:
+                with open(sys.argv[2]) as f:
+                    token = f.read()
+            except:
+                print("Error: Cannot read token from path")
+                quit()
         elif sys.argv[1] == "--skeleton" or sys.argv[1] == "--copy-skeleton":
             # -- now handled in utils.settings.py --- #
             pass
@@ -205,7 +212,8 @@ def main():
         pass
 
     check_for_updates()
-    token = get_token()
+    if token is None:
+        token = get_token()
 
     print(gc.term.yellow("Starting..."))
 

@@ -162,7 +162,7 @@ class StrongEmphasis(SpanToken):
 
 class BlankLine(BlockToken):
     def __init__(self, lines):
-        self._children = (RawText(''.join(lines)),)
+        self._children = (RawText(''),)
 
     @staticmethod
     def start(line):
@@ -170,7 +170,7 @@ class BlankLine(BlockToken):
 
     @staticmethod
     def read(lines):
-        return []
+        return [next(lines)]
 
 class Paragraph(_Paragraph):
     def __init__(self, lines):

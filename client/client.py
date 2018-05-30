@@ -142,7 +142,9 @@ class Client(discord.Client):
         clog = None
         if channel is None:
             clog = self.current_channel_log
+            log("Initializing current channel")
         else:
+            log("Initializing channel {}".format(channel.name))
             for svrlog in gc.server_log_tree:
                 for chllog in svrlog.logs:
                     if chllog.channel == channel:
