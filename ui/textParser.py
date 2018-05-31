@@ -79,7 +79,6 @@ def parseText(msg, colors):
     for tokid, blockToken in enumerate(blockTokens):
         # These are blockToken objects
         # A blockToken object has a LIST of children
-        attrs = curses.A_NORMAL
         for child in blockToken.children:
             if blockToken.__class__.__name__ == "CodeFence":
                 spanTokens.append((child.content, curses.A_REVERSE))
@@ -87,38 +86,32 @@ def parseText(msg, colors):
             elif blockToken.__class__.__name__ == "BlankLine":
                 spanTokens.append(('\n', curses.A_NORMAL))
                 continue
-            className = child.__class__.__name__
-            # Child can be either a formatted token or a raw token
-            if className in ("URL", "Strong", "Emphasis",
-                    "StrongEmphasis", "Underlined",
-                    "InlineCode"):
-                # These have a single child with RawText inside
-                if className == "Strong":
-                    attrs = curses.A_BOLD
-                elif className == "Emphasis":
+            attrs = curses.A_NORMAL
+            subChild = child
+            while subChild.__class__ != RawText:
+                if subChild.__class__ == StrongEmphasis:
                     if hasItalic:
-                        attrs = curses.A_ITALIC
+                        attrs |= curses.A_BOLD|curses.A_ITALIC
                     else:
-                        attrs = curses.A_UNDERLINE
-                elif className == "StrongEmphasis":
+                        attrs |= curses.A_BOLD|curses.A_UNDERLINE
+                elif subChild.__class__ == Strong:
+                    attrs |= curses.A_BOLD
+                elif subChild.__class__ == Emphasis:
                     if hasItalic:
-                        attrs = curses.A_BOLD | curses.A_ITALIC
+                        attrs |= curses.A_ITALIC
                     else:
-                        attrs = curses.A_BOLD | curses.A_UNDERLINE
-                elif className == "Underlined":
-                    attrs = curses.A_UNDERLINE
-                elif className == "URL":
-                    attrs = curses.A_UNDERLINE | colors["blue"]
-                elif className == "InlineCode":
-                    attrs = curses.A_REVERSE
-                spanTokens.append((child.children[0].content, attrs))
-            elif className == "RawText":
-                if shrugPresent and child.content.startswith('¯'):
-                    spanTokens.append(("¯\_(ツ)_/¯", curses.A_NORMAL))
-                    return spanTokens
-                spanTokens.append((child.content, curses.A_NORMAL))
-            else:
-                log("We shouldn't be here")
+                        attrs |= curses.A_UNDERLINE
+                elif subChild.__class__ == Underlined:
+                    attrs |= curses.A_UNDERLINE
+                elif subChild.__class__ == URL:
+                    attrs |= curses.A_UNDERLINE | colors["blue"]
+                elif subChild.__class__ == InlineCode:
+                    attrs |= curses.A_REVERSE
+                subChild = subChild.children[0]
+            if shrugPresent and subChild.content.startswith('¯'):
+                spanTokens.append(("¯\_(ツ)_/¯", curses.A_NORMAL))
+                return spanTokens
+            spanTokens.append((subChild.content, attrs))
 
     return spanTokens
 
@@ -133,8 +126,7 @@ class Document(BlockToken):
         self._children = tuple(blockTokenize(lines, [CodeFence, Paragraph, BlankLine, BlockToken], root=self))
 
 def tokenize_inner(content):
-    #return spanTokenize(content, token_types, RawText)
-    return spanTokenize(content, token_types)
+    return spanTokenize(content, [URL, StrongEmphasis, Underlined, Strong, Emphasis, InlineCode, RawText])
 
 class URL(SpanToken):
     """
@@ -156,7 +148,7 @@ class StrongEmphasis(SpanToken):
     """
     Strong-Emphasis tokens. ("***some text***")
     """
-    pattern = re.compile(r"\*\*\*([^\s*].*?)\*\*\*|\b___([^\s_].*?)___\b")
+    pattern = re.compile(r"(?:\*\*\*|\_\*\*|\*\*\_)([^\s]*?)(?:\*\*\*|\_\*\*|\*\*\_)|\b__([^\s_].*?)__\b")
     def __init__(self, match_obj):
         self._children = tokenize_inner(_first_not_none_group(match_obj))
 
@@ -176,5 +168,3 @@ class Paragraph(_Paragraph):
     def __init__(self, lines):
         content = ''.join(lines)
         BlockToken.__init__(self, content, tokenize_inner)
-
-token_types = [URL, Underlined, StrongEmphasis, Strong, Emphasis, InlineCode, RawText]
