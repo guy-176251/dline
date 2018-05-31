@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # ------------------------------------------------------- #
 #                                                         #
 # Discline                                                #
@@ -30,13 +29,6 @@ from tests.input_test import inputTestLauncher
 from tests.formatting_test import formattingTestLauncher
 from tests.scrolling_test import scrollingTestLauncher
 from tests.sendrecv_test import sendrecvTestLauncher
-
-# check if using python 3.5+
-# TODO: this still fails if they're using python2
-if sys.version_info >= (3, 5): pass
-else:
-    print(gc.term.red + "Sorry, but this requires python 3.5+" + gc.term.normal)
-    quit()
 
 init_complete = False
 

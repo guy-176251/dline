@@ -35,17 +35,17 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
     If all else fails, join the dev discord and we'll be glad to help!
 
-4. Run `python3 Discline.py --store-token` to store your token
+4. Run `python3 launcher.py --store-token` to store your token
 
-5. Run `python3 Discline.py --copy-skeleton` to get a template config
+5. Run `python3 launcher.py --copy-skeleton` to get a template config
 
 6. Edit `~/.config/Discline/config` to your choosing.
 
 7. Launch with python3
 
-    `python3 Discline.py`
+    `python3 launcher.py`
 
-    *(alternatively if you have python3.6 you can simply use `./Discline.py`)*
+    *(alternatively if you have python3.6 you can simply use `./Discline.py` or `python3.6 Discline.py`)*
 
 
 ### Current Features
@@ -117,7 +117,7 @@ be very confusing.
 ## Launching
 ------------------------
 Discline uses git for automatic updates, so you must be within the Discline
-directory upon starting. Manually you can launch via `python3.6 ./Discline.py`,
+directory upon starting. Manually you can launch via `python3.6 ./launcher.py`,
 however it is advised to create a helper script to do this for you.
 
 An example script is in the /res/scripts folder,

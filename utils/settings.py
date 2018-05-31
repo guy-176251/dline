@@ -27,8 +27,8 @@ def copy_skeleton():
         quit()
     except SystemExit:
         quit()
-    except:
-        print(term.red("Error creating skeleton file."))
+    except Exception as e:
+        print(term.red("Error creating skeleton file:"), e)
         quit()
 
 def load_config(path):
