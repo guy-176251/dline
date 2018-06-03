@@ -15,24 +15,6 @@ hasItalic = False
 if sys.version_info >= (3,7):
     hasItalic = True
 
-# Output: A list of tuples whose members are 1) raw text; and 2) attributes
-# Example: [
-#              ("Some text that is ", curses.A_NORMAL),
-#              ("bold\n", curses.A_BOLD),
-#              ("and across multiple ", curses.A_NORMAL),
-#              ("lines.", curses.A_UNDERLINE)
-#          ]
-
-# Possible objects:
-#  * List (Block token, OR Span token, OR RawText token)
-#  * Paragraph token (.children is a list of span tokens)
-#  * Span token (.chilren is a list of RawText)
-#  * RawText token (.content is content)
-#  * Content
-# What we need:
-#  * Content
-#  * Attributes
-
 def rectifyText(obj):
     text = obj
     if type(text) != str:
@@ -70,21 +52,13 @@ def parseText(msg, colors):
     msg = StringIO(rectifyText(msg))
     doc = Document(msg)
     blockTokens = doc.children
-    # FIXME: BlankLine sometimes at beginning of tokens
-    try:
-        if blockTokens[0].__class__.__name__ == "BlankLine":
-            blockTokens = blockTokens[1:]
-    except:
-        return [('(Unknown)', curses.A_BOLD)]
+    #log("blockTokens: {}".format(blockTokens))
     for tokid, blockToken in enumerate(blockTokens):
         # These are blockToken objects
         # A blockToken object has a LIST of children
         for child in blockToken.children:
             if blockToken.__class__.__name__ == "CodeFence":
                 spanTokens.append((child.content, curses.A_REVERSE))
-                continue
-            elif blockToken.__class__.__name__ == "BlankLine":
-                spanTokens.append(('\n', curses.A_NORMAL))
                 continue
             attrs = curses.A_NORMAL
             subChild = child
@@ -123,7 +97,7 @@ class Document(BlockToken):
         self.footnotes = {}
         # Document tokens have immediate access to first-level block tokens.
         # Useful for footnotes, etc.
-        self._children = tuple(blockTokenize(lines, [CodeFence, Paragraph, BlankLine, BlockToken], root=self))
+        self.children = blockTokenize(lines, [CodeFence, Paragraph], parent=None)
 
 def tokenize_inner(content):
     return spanTokenize(content, [URL, StrongEmphasis, Underlined, Strong, Emphasis, InlineCode, RawText])
@@ -134,7 +108,7 @@ class URL(SpanToken):
     """
     pattern = re.compile("(http(s)?:\\/\\/.)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)")
     def __init__(self, match_obj):
-        self._children = (RawText(match_obj.group()),)
+        self.children = (RawText(match_obj.group()),)
 
 class Underlined(SpanToken):
     """
@@ -142,7 +116,7 @@ class Underlined(SpanToken):
     """
     pattern = re.compile(r"\_\_([^\s*].*?)\_\_|\b__([^\s_].*?)__\b")
     def __init__(self, match_obj):
-        self._children = tokenize_inner(_first_not_none_group(match_obj))
+        self.children = tokenize_inner(_first_not_none_group(match_obj))
 
 class StrongEmphasis(SpanToken):
     """
@@ -150,21 +124,20 @@ class StrongEmphasis(SpanToken):
     """
     pattern = re.compile(r"(?:\*\*\*|\_\*\*|\*\*\_)([^\s]*?)(?:\*\*\*|\_\*\*|\*\*\_)|\b__([^\s_].*?)__\b")
     def __init__(self, match_obj):
-        self._children = tokenize_inner(_first_not_none_group(match_obj))
-
-class BlankLine(BlockToken):
-    def __init__(self, lines):
-        self._children = (RawText(''),)
-
-    @staticmethod
-    def start(line):
-        return line == '\n'
-
-    @staticmethod
-    def read(lines):
-        return [next(lines)]
+        self.children = tokenize_inner(_first_not_none_group(match_obj))
 
 class Paragraph(_Paragraph):
     def __init__(self, lines):
-        content = ''.join(lines)
+        content = ''.join([line.lstrip() for line in lines]).strip()
         BlockToken.__init__(self, content, tokenize_inner)
+
+    @classmethod
+    def read(cls, lines):
+        line_buffer = [next(lines)]
+        next_line = lines.peek()
+        while (next_line is not None
+                and next_line.strip() != ''
+                and not CodeFence.start(next_line)):
+            line_buffer.append(next(lines))
+            next_line = lines.peek()
+        return line_buffer

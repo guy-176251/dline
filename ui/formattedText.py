@@ -85,9 +85,9 @@ class FormattedText:
         wtokens = []
         for tok_id, ttoken in enumerate(ttokens):
             # handle newlines
-            if '\n' in ttoken[0] and ttoken[0] != '\n' and \
-                    ttoken[0].count('\n') > 1:
+            if '\n' in ttoken[0] and ttoken[0] != '\n':
                 lines = ttoken[0].splitlines()
+                #log("lines: {}".format(lines))
                 if not lines[0]: # if first line is empty
                     wtokens.append(('\n', curses.A_NORMAL))
                     del lines[0]
