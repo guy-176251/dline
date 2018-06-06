@@ -118,68 +118,17 @@ async def input_handler(text):
 
 async def parseCommand(command, arg=None):
     if command in ("server", 's'):
-        server_name = ""
-        server_log = None
-        for servlog in gc.server_log_tree:
-            if arg.lower() in servlog.name.lower():
-                server_name = servlog.name
-                server_log = servlog
-                break
-        if server_name:
-            gc.client.current_server = server_name
-            def_chan = ""
-
-            lowest = 999
-            for chan in server_log.server.channels:
-                if chan.type is discord.ChannelType.text and \
-                        chan.permissions_for(server_log.server.me).read_messages and \
-                        chan.position < lowest:
-                    try:
-                        # Skip over ignored channels
-                        for serv_key in settings["channel_ignore_list"]:
-                            if serv_key["server_name"].lower() == server_name:
-                                for name in serv_key["ignores"]:
-                                    if chan.name.lower() == name.lower():
-                                        raise Found
-                    except:
-                        continue
-                    lowest = chan.position
-                    def_chan = chan
-                try:
-                    gc.client.current_channel = def_chan.name
-                    for chanlog in servlog.logs:
-                        if chanlog.channel is def_chan:
-                            chanlog.unread = False
-                            chanlog.mentioned_in = False
-                            break
-                except: continue
-            log("changed server")
-            gc.ui.channel_log_offset = -1
-            gc.ui.doUpdate = True
-            while gc.ui.doUpdate:
-                await asyncio.sleep(0.01)
-        else:
-            log("Can't find server", logging.error)
+        prev_server = gc.client.current_server
+        gc.client.current_server = arg
+        if gc.client.current_server is prev_server:
+            return
+        log("changed server")
+        gc.ui.channel_log_offset = -1
+        gc.ui.doUpdate = True
+        while gc.ui.doUpdate:
+            await asyncio.sleep(0.01)
     elif command in ("channel", 'c'):
-        for servlog  in gc.server_log_tree:
-            if servlog.server is gc.client.current_server:
-                final_chanlog = ""
-                for chanlog in servlog.logs:
-                    if arg.lower() in chanlog.name.lower()and \
-                            chanlog.channel.type is discord.ChannelType.text and \
-                            chanlog.channel.permissions_for(
-                                    servlog.server.me).read_messages:
-                        final_chanlog = chanlog
-                        break
-                if final_chanlog:
-                    gc.client.current_channel = final_chanlog.name
-                    final_chanlog.unread = False
-                    final_chanlog.mentioned_in = False
-                    gc.ui.doUpdate = True
-                    while gc.ui.doUpdate:
-                        await asyncio.sleep(0.01)
-                else:
-                    log("Can't find channel", logging.error)
+        gc.client.current_channel = arg
     elif command == "nick":
         try:
             await gc.client.change_nickname(gc.client.current_server.me, arg)

@@ -48,12 +48,6 @@ async def on_ready():
     else:
         gc.client.prompt = '~'
 
-    if settings["default_server"] is not None:
-        gc.client.current_server = settings["default_server"]
-        if settings["default_channel"] is not None:
-            gc.client.current_channel = settings["default_channel"].lower()
-            gc.client.prompt = settings["default_channel"].lower()
-
     if settings["default_game"] is not None:
         await gc.client.set_game(settings["default_game"])
 
@@ -84,6 +78,12 @@ async def on_ready():
 
         # add the channellog to the tree
         gc.server_log_tree.append(ServerLog(server, serv_logs))
+
+    if settings["default_server"] is not None:
+        gc.client.current_server = settings["default_server"]
+        if settings["default_channel"] is not None:
+            gc.client.current_channel = settings["default_channel"].lower()
+            gc.client.prompt = settings["default_channel"].lower()
 
     # start our own coroutines
     await start_ui()

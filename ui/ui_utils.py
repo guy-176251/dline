@@ -30,7 +30,7 @@ async def get_role_color(r, colors):
         else: color = colors["green"]
     return color
 
-async def calc_mutations(msg):
+def calc_mutations(msg):
     for embed in msg.embeds:
         info = "\n---\n"
         if 'description' in embed:
@@ -68,7 +68,7 @@ async def calc_mutations(msg):
             full_name = "<:" + emoji.name + ":" + emoji.id + ">"
 
             while full_name in text:
-                text = await trim_emoji(full_name, emoji.name, text)
+                text = trim_emoji(full_name, emoji.name, text)
 
         msg.content = text
 
@@ -78,23 +78,23 @@ async def calc_mutations(msg):
         full_name = mat.group(0)
 
         while full_name in text:
-            text = await trim_emoji(full_name, full_name[1:-1].split(':')[1], text)
+            text = trim_emoji(full_name, full_name[1:-1].split(':')[1], text)
 
         msg.content = text
 
     # check if the message is a "user has pinned..." message
     if msg.type == MessageType.pins_add:
-        msg.content = await convert_pin(msg)
+        msg.content = convert_pin(msg)
 
     # else it must be a regular message, nothing else
     return msg
 
-async def convert_pin(msg):
+def convert_pin(msg):
     name = ""
     if msg.author.nick is not None and msg.author.nick != "":
         name = msg.author.nick
     else: name = msg.author.name
     return "{} {} has pinned a message to this channel.".format(chr(0x1f4cc), name)
 
-async def trim_emoji(full_name, short_name, string):
+def trim_emoji(full_name, short_name, string):
     return string.replace(full_name, ":" + short_name + ":")

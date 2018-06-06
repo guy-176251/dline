@@ -17,7 +17,7 @@ async def on_incoming_message(msg):
                     if channel_log.channel not in gc.channels_entered:
                         await gc.client.init_channel(channel_log.channel)
                     else:
-                        channel_log.append(await calc_mutations(msg))
+                        channel_log.append(calc_mutations(msg))
                     if channel_log.channel is not gc.client.current_channel:
                         if msg.server.me.mention in msg.content:
                             channel_log.mentioned_in = True
