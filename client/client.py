@@ -10,6 +10,11 @@ from ui.ui_utils import calc_mutations
 from ui.formattedText import FormattedText
 from ui.ui import init_channel_formattedText
 
+class Found(Exception):
+    pass
+class NoChannelsFoundException(Exception):
+    pass
+
 # inherits from discord.py's Client
 class Client(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -33,10 +38,6 @@ class Client(discord.Client):
         return self._current_server
     @current_server.setter
     def current_server(self, server):
-        class Found(Exception):
-            pass
-        class NoChannelsFoundException(Exception):
-            pass
         if isinstance(server, str):
             for srv in self.servers:
                 if server.lower() in srv.name.lower():
@@ -96,7 +97,8 @@ class Client(discord.Client):
             try:
                 svr = self.current_server
                 for chl in svr.channels:
-                    if channel.lower() in chl.name.lower():
+                    if channel.lower() in chl.name.lower() and \
+                            chl.permissions_for(svr.me).read_messages:
                         self._current_channel = chl
                         self._prompt = chl.name
                         if len(gc.channels_entered) > 0:
@@ -117,6 +119,9 @@ class Client(discord.Client):
                 raise RuntimeError("Could not find channel!")
             except RuntimeError as e:
                 log("RuntimeError during channel setting: {}".format(e), logging.error)
+                return
+            except AttributeError:
+                log("Attribute error: chanlog is None", logging.error)
                 return
             except:
                 e = sys.exc_info()[0]
@@ -207,21 +212,20 @@ class Client(discord.Client):
             await super().send_typing(channel)
 
     async def init_channel(self, channel=None):
-        doBreak = False
         clog = None
         if channel is None:
             clog = self.current_channel_log
             log("Initializing current channel")
         else:
             log("Initializing channel {}".format(channel.name))
-            for svrlog in gc.server_log_tree:
-                for chllog in svrlog.logs:
-                    if chllog.channel == channel:
-                        clog = chllog
-                        doBreak = True
-                        break
-                if doBreak:
-                    break
+            try:
+                for svrlog in gc.server_log_tree:
+                    for chllog in svrlog.logs:
+                        if chllog.channel == channel:
+                            clog = chllog
+                            raise Found
+            except Found:
+                pass
         if clog.channel.type is discord.ChannelType.text and \
                 clog.channel.permissions_for(clog.server.me).read_messages:
             async for msg in self.logs_from(clog.channel,

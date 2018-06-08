@@ -8,7 +8,7 @@ from utils.log import log
 from ui.ui_utils import get_role_color
 from ui.userlist import UserList
 from ui.formattedText import FormattedText
-from utils.quicksort import quick_sort_channel_logs
+from utils.quicksort import quick_sort_channels, quick_sort_channel_logs
 from utils.settings import settings
 
 hasItalic = False
@@ -500,11 +500,13 @@ async def draw_channellist():
         gc.ui.toggleDisplay()
         return
 
+    channels = quick_sort_channels(list(gc.client.current_server.channels))
+
     buf = []
-    for channel in gc.client.current_server.channels:
-        if channel.type == ChannelType.text:
-            name = channel.name
-            buf.append((name, 0))
+    for channel in channels:
+        if channel.type is ChannelType.text and \
+                channel.permissions_for(channel.server.me).read_messages:
+            buf.append((channel.name, 0))
 
     line_offset = 0
     while True:
