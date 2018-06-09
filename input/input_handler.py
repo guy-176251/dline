@@ -34,6 +34,9 @@ async def key_input():
             continue
         if chr(ch) != '\n':
             gc.typingBeingHandled = True
+        # prevents crashes when enter is hit and input buf is empty
+        if chr(ch) == '\n' and not gc.ui.edit.inputBuffer:
+            continue
         if ch == curses.KEY_PPAGE:
             gc.ui.channel_log_offset -= settings["scroll_lines"]
             gc.ui.doUpdate = True

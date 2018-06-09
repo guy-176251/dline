@@ -66,6 +66,7 @@ number_channels: false
 # the amount of lines to scroll up/down on each trigger
 scroll_lines: 3
 
+# Enables logging user messages to a file
 message_log: false
 
 # ---------------- COLOR SETTINGS ------------------------------------ #
