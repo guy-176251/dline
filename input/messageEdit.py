@@ -16,9 +16,9 @@ class MessageEdit:
 
     def getCurrentData(self):
         if len(self.inputBuffer) < self.maxWidth:
-            return ("".join(self.inputBuffer), self.curPos)
+            return (bytearray(self.inputBuffer).decode("utf-8"), self.curPos)
         else:
-            return ("".join(self.inputBuffer[self.offset:self.offset+self.maxWidth]), self.curPos)
+            return (bytearray(self.inputBuffer[self.offset:self.offset+self.maxWidth]).decode("utf-8"), self.curPos)
 
     def addKey(self, ch):
         # check if character is function character
@@ -56,10 +56,10 @@ class MessageEdit:
                 self.inputBuffer.pop(self.offset+self.curPos-1)
                 self.curPos -= 1
         elif ch == ord('\n'):
-            return "".join(self.inputBuffer)
+            return bytearray(self.inputBuffer).decode("utf-8")
         # Normal text
         else:
-            self.inputBuffer.insert(self.offset+self.curPos, chr(ch))
+            self.inputBuffer.insert(self.offset+self.curPos, ch)
             if self.curPos != self.maxWidth-1:
                 self.curPos += 1
             else:

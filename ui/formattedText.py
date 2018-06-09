@@ -102,20 +102,22 @@ class FormattedText:
                 continue
             words = ttoken[0].split(' ')
             for idx, word in enumerate(words):
-                if len(word) < 1:
+                wordwidth = findWidth(word)
+                if wordwidth < 1:
                     continue
                 # if single word is longer than width
-                if len(word) >= width:
-                    iters = len(word)//(width-1)
-                    if len(word)%(width-1) != 0:
+                if wordwidth >= width:
+                    iters = wordwidth//(width-1)
+                    if wordwidth%(width-1) != 0:
                         iters += 1
                     for segid in range(iters):
+                        iterlen = int(width*(len(word)/wordwidth))
                         if segid < iters-1:
-                            rng = word[segid*(width-1):(segid+1)*(width-1)]
+                            rng = word[segid*(iterlen-1):(segid+1)*(iterlen-1)]
                             wtokens.append((rng, ttoken[1]))
                             wtokens.append(('\n', curses.A_NORMAL))
                         else:
-                            rng = word[segid*(width-1):]
+                            rng = word[segid*(iterlen-1):]
                             wtokens.append((rng, ttoken[1]))
                     continue
                 wtokens.append((word, ttoken[1]))
@@ -124,12 +126,13 @@ class FormattedText:
         line = Line(True, name, topRole)
         ltokens = []
         for idx,wtoken in enumerate(wtokens):
-            cpos += len(wtoken[0])+1
+            wtokenlen = findWidth(wtoken[0])
+            cpos += wtokenlen+1
             if cpos > width or wtoken[0] == '\n':
                 ltokens.append(line)
                 line = Line()
                 line.add(TokenContainer(wtoken[0].rstrip(), wtoken[1]))
-                cpos = len(wtoken[0])+1
+                cpos = wtokenlen+1
                 continue
             line.add(TokenContainer(wtoken[0].rstrip(), wtoken[1]))
             if idx == len(wtokens)-1:
