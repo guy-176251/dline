@@ -681,7 +681,7 @@ async def draw_userlist():
     gc.ui.refreshAll()
     gc.ui.doUpdate = True
 
-async def draw_help():
+async def draw_help(terminateAfter=False):
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
     display.clear()
@@ -738,6 +738,9 @@ async def draw_help():
     ]
 
     line_offset = 0
+    # needed for --help flag
+    curses.cbreak()
+    curses.noecho()
     while True:
         display.clear()
         for line_id, line in enumerate(buf[line_offset:line_offset+(gc.ui.max_y)]):
@@ -764,6 +767,8 @@ async def draw_help():
             elif len(buf) > (gc.ui.max_y-5) and line_offset > (len(buf)-(gc.ui.max_y-5)):
                 line_offset = len(buf)-(gc.ui.max_y-5)
         asyncio.sleep(0.1)
+    if terminateAfter:
+        raise SystemExit
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     gc.ui.doUpdate = True

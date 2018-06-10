@@ -164,6 +164,10 @@ def runTest(test):
     elif test == "sendrecv":
         sendrecvTestLauncher()
 
+async def runSimpleHelp():
+    await start_ui()
+    await draw_help(terminateAfter=True)
+
 def main():
     # start the client coroutine
     if settings and settings["debug"]:
@@ -171,7 +175,10 @@ def main():
     token = None
     try:
         if sys.argv[1] == "--help" or sys.argv[1] == "-h":
-            draw_help()
+            try:
+                asyncio.get_event_loop().run_until_complete(runSimpleHelp())
+            except SystemExit:
+                pass
             quit()
         elif sys.argv[1] == "--token" or sys.argv[1] == "--store-token":
             store_token()
