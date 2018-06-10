@@ -85,18 +85,15 @@ class FormattedText:
         wtokens = []
         for tok_id, ttoken in enumerate(ttokens):
             # handle newlines
-            if '\n' in ttoken[0] and ttoken[0] != '\n':
+            if '\n' in ttoken[0].strip() and ttoken[0] != '\n':
                 lines = ttoken[0].splitlines()
                 #log("lines: {}".format(lines))
                 if not lines[0]: # if first line is empty
                     wtokens.append(('\n', curses.A_NORMAL))
                     del lines[0]
                 for lineid, line in enumerate(lines):
-                    if ttoken[1] != curses.A_REVERSE:
-                        for word in line.split(' '):
-                            wtokens.append((word, ttoken[1]))
-                    else:
-                        wtokens.append((line, curses.A_REVERSE))
+                    for word in line.split(' '):
+                        wtokens.append((word, ttoken[1]))
                     if lineid != len(lines)-1 or (lineid == len(lines)-1 and ttoken[0].endswith('\n')):
                         wtokens.append(('\n', curses.A_NORMAL))
                 continue
