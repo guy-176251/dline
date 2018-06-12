@@ -45,6 +45,7 @@ class CursesUI:
         self.leftBar = None
         self.editBar = None
         self.chatWin = None
+        self.userWin = None
         self.displayWin = None
         self.contentWins = []
         self.frameWin = None
@@ -54,6 +55,7 @@ class CursesUI:
         self.separatorsVisible = True
         self.topBarVisible = True
         self.leftBarVisible = True
+        self.userBarVisible = False
 
     def initScreen(self):
         self.screen.keypad(True)
@@ -70,14 +72,21 @@ class CursesUI:
         self.separatorsVisible = settings["show_separators"]
         self.topBarVisible = settings["show_top_bar"]
         self.leftBarVisible = settings["show_left_bar"]
+        if "show_user_bar" in settings:
+            self.userBarVisible = settings["show_user_bar"]
 
     def resize(self):
         self.max_y, self.max_x = self.screen.getmaxyx()
         self.clearWins()
-        self.makeFrameWin(resize=True)
-        self.makeTopBar(resize=True)
+        if self.separatorsVisible:
+            self.makeFrameWin(resize=True)
+        if self.topBarVisible:
+            self.makeTopBar(resize=True)
         self.makeBottomBar(resize=True)
-        self.makeLeftBar(resize=True)
+        if self.leftBarVisible:
+            self.makeLeftBar(resize=True)
+        if self.userBarVisible:
+            self.makeUserBar(resize=True)
         self.makeChatWin(resize=True)
         self.makeDisplay(resize=True)
         self.edit.maxWidth = self.max_x
@@ -135,11 +144,28 @@ class CursesUI:
 
         self.contentWins.append(content)
 
+    def makeUserBar(self, resize=False):
+        width = self.userBarWidth
+        y_offset = 0
+        if self.topBarVisible:
+            y_offset = 2
+
+        if resize:
+            self.userBar.resize(self.max_y-y_offset-2,width-1)
+            return
+        content = curses.newwin(self.max_y-y_offset-2,width-1, y_offset,self.max_x-width)
+        self.userBar = content
+        self.userBar.leaveok(True)
+
+        self.contentWins.append(content)
+
     def makeChatWin(self, resize=False):
-        x_offset = 0;width = 0
+        x_offset = 0;width = self.max_x
         if settings["show_left_bar"]:
             x_offset = self.leftBarWidth+1
-            width = self.max_x-x_offset-1
+            width -= x_offset
+        if settings["show_user_bar"]:
+            width -= self.userBarWidth+1
         y_offset = 0
         if settings["show_top_bar"]:
             y_offset = 2
@@ -181,11 +207,14 @@ class CursesUI:
         self.makeFrameWin()
         self.makeDisplay()
         self.leftBarWidth = int(self.max_x // settings["left_bar_divider"])
+        self.userBarWidth = int(self.max_x // settings["user_bar_divider"])
         if self.topBarVisible:
             self.makeTopBar()
         self.makeBottomBar()
         if self.leftBarVisible:
             self.makeLeftBar()
+        if self.userBarVisible:
+            self.makeUserBar()
         self.makeChatWin()
         self.redrawFrames()
 
@@ -207,6 +236,12 @@ class CursesUI:
                     self.max_y-y_offset-3)
             self.frameWin.addch(y_offset,self.leftBarWidth, curses.ACS_TTEE)
             self.frameWin.addch(self.max_y-2,self.leftBarWidth, curses.ACS_BTEE)
+        # redraw user frame
+        if self.userBarVisible and self.separatorsVisible:
+            self.frameWin.vline(y_offset+1,self.max_x-self.userBarWidth-1, curses.ACS_VLINE,
+                    self.max_y-y_offset-3)
+            self.frameWin.addch(y_offset,self.max_x-self.userBarWidth-1, curses.ACS_TTEE)
+            self.frameWin.addch(self.max_y-2,self.max_x-self.userBarWidth-1, curses.ACS_BTEE)
         self.frameWin.refresh()
 
     def toggleDisplay(self):
@@ -240,6 +275,8 @@ async def draw_screen():
             await draw_top_bar()
         if gc.ui.leftBarVisible:
             await draw_left_bar()
+        if gc.ui.userBarVisible:
+            await draw_user_bar()
         if gc.server_log_tree is not None:
             await draw_channel_log()
         await draw_bottom_bar()
@@ -370,6 +407,24 @@ async def draw_left_bar():
     #with gc.term.location(0, start):
     #    print("".join(buffer))
     leftBar.refresh()
+
+async def draw_user_bar():
+    userBar = gc.ui.userBar
+    height, width = userBar.getmaxyx()
+
+    userBar.clear()
+
+    for idx,member in enumerate(gc.client.current_server.members):
+        if idx+2 > height:
+            userBar.addstr(idx,0, "(more)", gc.ui.colors["green"])
+            break
+        name = member.display_name
+        if len(name) >= width:
+            name = name[:width-4] + "..."
+
+        userBar.addstr(idx,0, name)
+
+    userBar.refresh()
 
 async def draw_bottom_bar():
     editBar = gc.ui.editBar
