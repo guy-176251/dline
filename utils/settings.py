@@ -13,7 +13,7 @@ def copy_skeleton():
     try:
         from shutil import copyfile
         if not os.path.exists(os.getenv("HOME") + "/.config/Discline"):
-            os.mkdir(os.getenv("HOME") + "/.config/Discline")
+            os.makedirs(os.getenv("HOME") + "/.config/Discline", exist_ok=True)
 
         if os.path.exists(os.getenv("HOME") + "/.config/Discline/config"):
             try:
