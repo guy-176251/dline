@@ -40,8 +40,6 @@ gc.initClient()
 
 @gc.client.event
 async def on_ready():
-    await gc.client.wait_until_login()
-
     # these values are set in settings.yaml
     if settings["default_prompt"] is not None:
         gc.client.prompt = settings["default_prompt"].lower()
@@ -80,7 +78,11 @@ async def on_ready():
         gc.server_log_tree.append(ServerLog(server, serv_logs))
 
     if settings["default_server"] is not None:
-        gc.client.current_server = settings["default_server"]
+        gc.client.set_current_server(settings["default_server"])
+        if gc.client.current_server is None:
+            print("ERROR: default_server not found!")
+            raise KeyboardInterrupt
+            return
         if settings["default_channel"] is not None:
             gc.client.current_channel = settings["default_channel"].lower()
             gc.client.prompt = settings["default_channel"].lower()
@@ -218,22 +220,23 @@ def main():
     print(gc.term.yellow("Starting..."))
 
     # start the client
-    try: gc.client.run(token, bot=False)
-    except KeyboardInterrupt: pass
-    except SystemExit: pass
+    loop = asyncio.get_event_loop()
     try:
-        gc.client.close()
-    except:
-        pass
-    try:
-        asyncio.get_event_loop().close()
+        loop.run_until_complete(gc.client.start(token, bot=False))
     except:
         pass
 
-    # if we are here, the client's loop was cancelled or errored, or user exited
-    curses.nocbreak()
-    gc.ui.screen.keypad(False)
-    curses.echo()
-    curses.endwin()
+    # stop the client and close the event loop
+    try:
+        gc.client.close()
+        loop.close()
+    except:
+        pass
+
+    if gc.ui.isInitialized:
+        curses.nocbreak()
+        gc.ui.screen.keypad(False)
+        curses.echo()
+        curses.endwin()
 
 if __name__ == "__main__": main()

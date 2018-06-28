@@ -36,8 +36,8 @@ class Client(discord.Client):
     def current_server(self):
         # discord.Server object
         return self._current_server
-    @current_server.setter
-    def current_server(self, server):
+
+    def set_current_server(self, server):
         if isinstance(server, str):
             for srv in self.servers:
                 if server.lower() in srv.name.lower():

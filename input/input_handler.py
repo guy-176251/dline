@@ -122,7 +122,7 @@ async def input_handler(text):
 async def parseCommand(command, arg=None):
     if command in ("server", 's'):
         prev_server = gc.client.current_server
-        gc.client.current_server = arg
+        gc.client.set_current_server(arg)
         if gc.client.current_server is prev_server:
             return
         log("changed server")
