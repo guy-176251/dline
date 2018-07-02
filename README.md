@@ -13,7 +13,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
 1. Install the dependencies:
 
-    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe`
+    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe==0.6.2`
 
 2. Clone the repo
 
