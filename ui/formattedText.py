@@ -1,7 +1,9 @@
-from utils.log import log
 import curses
 from collections import deque
 import unicodedata
+from utils.log import log
+from utils.settings import settings
+from utils.globals import gc
 from ui.textParser import parseText
 
 def findWidth(s):
@@ -39,12 +41,9 @@ class Line:
         self.words.append(token)
 
 class FormattedText:
-    def __init__(self, w, maxlen=100, colors=0):
-        self.width = w
-        self.colors = colors
-
+    def __init__(self):
         self.messages = []
-        self.messageBuffer = deque([], maxlen)
+        self.messageBuffer = deque([], settings["max_messages"])
 
     def addMessage(self, msg):
         self.messages.append(msg)
@@ -57,9 +56,7 @@ class FormattedText:
                 lines.append(line)
         return lines
 
-    def refresh(self, newWidth=None):
-        if newWidth is not None:
-            self.width = newWidth
+    def refresh(self):
         self.messageBuffer.clear()
         for msg in self.messages:
             self.format(msg)
@@ -76,10 +73,10 @@ class FormattedText:
         if msg.author.__class__.__name__ == "Member":
             topRole = msg.author.top_role.name.lower()
         offset = findWidth(name)+2
-        width = self.width-offset
+        width = gc.ui.chatWinWidth-offset
 
         # Tokens grouped by type (type tokens)
-        ttokens = parseText(msg.clean_content, self.colors)
+        ttokens = parseText(msg.clean_content, gc.ui.colors)
         #log("ttokens: {}".format(ttokens))
         # Separate tokens by word (word tokens)
         wtokens = []

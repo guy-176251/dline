@@ -1,7 +1,7 @@
 class Line():
 
     # the text the line contains
-    text = "" 
+    text = ""
     # how offset from the [left_bar_width + MARGIN] it should be printed
     # this is to offset wrapped lines to better line up with the previous
     offset = 0

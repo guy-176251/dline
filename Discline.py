@@ -3,7 +3,7 @@
 #                                                         #
 # Discline                                                #
 #                                                         #
-# http://github.com/MitchWeaver/Discline                  #
+# http://github.com/NatTupper/Discline                    #
 #                                                         #
 # Licensed under GNU GPLv3                                #
 #                                                         #
@@ -26,10 +26,6 @@ from client.serverlog import ServerLog
 from client.channellog import ChannelLog
 from client.on_message import on_incoming_message
 from client.client import Client
-from tests.input_test import inputTestLauncher
-from tests.formatting_test import formattingTestLauncher
-from tests.scrolling_test import scrollingTestLauncher
-from tests.sendrecv_test import sendrecvTestLauncher
 
 init_complete = False
 
@@ -170,6 +166,13 @@ async def runSimpleHelp():
     await start_ui()
     await draw_help(terminateAfter=True)
 
+def terminate_curses():
+    log("Test")
+    curses.nocbreak()
+    gc.ui.screen.keypad(False)
+    curses.echo()
+    curses.endwin()
+
 def main():
     # start the client coroutine
     if settings and settings["debug"]:
@@ -181,6 +184,7 @@ def main():
                 asyncio.get_event_loop().run_until_complete(runSimpleHelp())
             except SystemExit:
                 pass
+            terminate_curses()
             quit()
         elif sys.argv[1] == "--token" or sys.argv[1] == "--store-token":
             store_token()
@@ -198,14 +202,6 @@ def main():
         elif sys.argv[1] == "--config":
             # -- now handled in utils.settings.py --- #
             pass
-        elif sys.argv[1] == "--test":
-            if len(sys.argv) < 3:
-                print(gc.term.red("Error: Incorrect syntax for --test"))
-                print(gc.term.yellow("Syntax: Discline.py --test testName"))
-                quit()
-            elif sys.argv[2] in ("input", "formatting", "scrolling", "sendrecv"):
-                runTest(sys.argv[2])
-                quit()
         else:
             print(gc.term.red("Error: Unknown command."))
             print(gc.term.yellow("See --help for options."))
@@ -234,9 +230,6 @@ def main():
         pass
 
     if gc.ui.isInitialized:
-        curses.nocbreak()
-        gc.ui.screen.keypad(False)
-        curses.echo()
-        curses.endwin()
+        terminate_curses()
 
 if __name__ == "__main__": main()

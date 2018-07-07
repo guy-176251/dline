@@ -43,26 +43,26 @@ send_is_typing: true
 show_emojis: true
 
 # Whether to show, or hide the left channel bar
-show_left_bar: true
+show_left_win: true
 
 # Whether to show, or hide the top bar
-show_top_bar: true
+show_top_win: true
 
 # Whether to show, or hide the user bar
-show_user_bar: false
+show_user_win: false
 
 # Whether to show the separator lines
 show_separators: true
 
 # the denominator used to calculate the width of the "left bar"
 # NOTE: larger number here, the smaller the bar will be,
-#       (although there is still a minimum of 8 chars...) 
-left_bar_divider: 9
+#       (although there is still a minimum of 8 chars...)
+left_win_divider: 9
 
 # same as the above setting but for the user bar
-user_bar_divider: 6
+user_win_divider: 6
 
-# Determines whether the left bar 'truncates' the channels or 
+# Determines whether the left bar 'truncates' the channels or
 # appends "..." to the end when the screen is too small to display them
 truncate_channels: false
 
@@ -98,14 +98,14 @@ url_color: cyan
 channel_list_color: white
 current_channel_color: green
 
-# colors for the channels in the left bar upon unreads 
+# colors for the channels in the left bar upon unreads
 unread_channel_color: blink_yellow
 unread_mention_color: blink_red
-  
+
 # whether channels should blink when they have unread messages
 blink_unreads: true
 
-# same as above, but for @mentions 
+# same as above, but for @mentions
 blink_mentions: true
 
 # here you can define your own custom roles - NOTE: text must match exactly!
@@ -118,13 +118,13 @@ custom_roles:
   color: blue
 - name: bot
   color: yellow
-  
+
 # Channel ignore list - This stops the channel from being loaded.
 # Effectively like the "mute" + "hide" feature on the official client,
 # However with the added benefit that this means these channels won't
-# be stored in RAM.    
+# be stored in RAM.
 
-# Follow the format as below. 
+# Follow the format as below.
 # Note it is TWO spaces, not a tab!
 channel_ignore_list:
 - server_name: server name
@@ -136,5 +136,5 @@ channel_ignore_list:
   - foo
   - bar
 
-# ignore this unless you know what you're doing 
+# ignore this unless you know what you're doing
 debug: false

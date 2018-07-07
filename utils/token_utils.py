@@ -12,7 +12,7 @@ def get_token():
 
         if token != "":
             return token
-    
+
     from blessings import Terminal
     gc.term = Terminal()
     print("\n" + gc.term.red("Error reading token."))
@@ -23,9 +23,9 @@ def get_token():
 def store_token():
     import sys
     from blessings import Terminal
-    
+
     token = ""
-    try: 
+    try:
         token=sys.argv[2]
     except IndexError:
         print(Terminal().red("Error: You did not specify a token!"))
@@ -44,7 +44,7 @@ def store_token():
         # print(Terminal().red("Error: Bad token. Did you paste it correctly?"))
         # quit()
     # ------------------------------------------------------------------------- #
-    
+
     try:
         f = open(os.getenv("HOME") + "/.config/Discline/token", "w")
         f.write(token)

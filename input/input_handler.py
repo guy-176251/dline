@@ -3,7 +3,6 @@ import curses
 import logging
 from utils.log import log
 import discord
-from input.kbhit import KBHit
 import ui.ui as ui
 from utils.globals import gc, kill
 from utils.settings import settings
@@ -12,30 +11,22 @@ from commands.sendfile import send_file
 from commands.channel_jump import channel_jump
 from input.messageEdit import MessageEdit
 
-def init_channel_messageEdit(channel):
-    gc.ui.messageEdit[channel.id] = MessageEdit(gc.ui.max_x, channel.name)
-
 async def key_input():
     # if the next two aren't here, input does not work
     curses.cbreak()
     curses.noecho()
-    editBar = gc.ui.editBar
-    try:
-        gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
-    except:
-        init_channel_messageEdit(gc.client.current_channel)
-        gc.ui.edit = gc.ui.messageEdit[gc.client.current_channel.id]
-    await ui.draw_bottom_bar()
+    editWin = gc.ui.editWin
+    await ui.draw_edit_win()
     while not gc.doExit:
         prompt = gc.client.prompt
-        ch = editBar.getch()
+        ch = editWin.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
             await asyncio.sleep(0.01)
             continue
         if chr(ch) != '\n':
             gc.typingBeingHandled = True
         # prevents crashes when enter is hit and input buf is empty
-        if chr(ch) == '\n' and not gc.ui.edit.inputBuffer:
+        if chr(ch) == '\n' and not gc.ui.messageEdit.inputBuffer:
             continue
         if ch == curses.KEY_PPAGE:
             gc.ui.channel_log_offset -= settings["scroll_lines"]
@@ -55,12 +46,12 @@ async def key_input():
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)
             continue
-        await ui.draw_bottom_bar()
-        ret = gc.ui.edit.addKey(ch)
+        await ui.draw_edit_win()
+        ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
             await input_handler(ret)
-            gc.ui.edit.reset()
-        await ui.draw_bottom_bar()
+            gc.ui.messageEdit.reset()
+        await ui.draw_edit_win()
     log("key_input finished")
     gc.tasksExited += 1
 

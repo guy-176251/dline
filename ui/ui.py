@@ -7,7 +7,6 @@ from input.messageEdit import MessageEdit
 from utils.log import log
 from ui.ui_utils import get_role_color
 from ui.userlist import UserList
-from ui.formattedText import FormattedText
 from utils.quicksort import quick_sort_channels, quick_sort_channel_logs
 from utils.settings import settings
 
@@ -33,29 +32,26 @@ class CursesUI:
         self.frameWins = []
         self.contentWins = []
 
-        self.formattedText = {}
-        self.messageEdit = {}
-        self.edit = None
+        self.messageEdit = MessageEdit()
+        self.views = {}
         self.isInitialized = False
         self.areLogsRead = False
         self.doUpdate = False
         self.channel_log_offset = -1
         # Windows
-        self.topBar = None
-        self.leftBar = None
-        self.editBar = None
+        self.topWin = None
+        self.leftWin = None
+        self.editWin = None
         self.chatWin = None
+        self.chatWinWidth = 0
         self.userWin = None
-        self.displayWin = None
         self.contentWins = []
         self.frameWin = None
-        # Panels
-        self.displayPanel = None
         # Visibility
         self.separatorsVisible = True
-        self.topBarVisible = True
-        self.leftBarVisible = True
-        self.userBarVisible = False
+        self.topWinVisible = True
+        self.leftWinVisible = True
+        self.userWinVisible = False
 
     def initScreen(self):
         self.screen.keypad(True)
@@ -70,29 +66,32 @@ class CursesUI:
         for key,value in colorNames.items():
             self.colors[key] = curses.color_pair(value)
         self.separatorsVisible = settings["show_separators"]
-        self.topBarVisible = settings["show_top_bar"]
-        self.leftBarVisible = settings["show_left_bar"]
-        if "show_user_bar" in settings:
-            self.userBarVisible = settings["show_user_bar"]
+        try:
+            self.topWinVisible = settings["show_top_win"]
+            self.leftWinVisible = settings["show_left_win"]
+        except:
+            self.topWinVisible = settings["show_top_bar"]
+            self.leftWinVisible = settings["show_left_bar"]
+        try:
+            self.userWinVisible = settings["show_user_win"]
+        except:
+            pass
 
     def resize(self):
         self.max_y, self.max_x = self.screen.getmaxyx()
         self.clearWins()
         if self.separatorsVisible:
             self.makeFrameWin(resize=True)
-        if self.topBarVisible:
-            self.makeTopBar(resize=True)
-        self.makeBottomBar(resize=True)
-        if self.leftBarVisible:
-            self.makeLeftBar(resize=True)
-        if self.userBarVisible:
-            self.makeUserBar(resize=True)
+        if self.topWinVisible:
+            self.makeTopWin(resize=True)
+        self.makeBottomWin(resize=True)
+        if self.leftWinVisible:
+            self.makeLeftWin(resize=True)
+        if self.userWinVisible:
+            self.makeUserWin(resize=True)
         self.makeChatWin(resize=True)
         self.makeDisplay(resize=True)
         self.edit.maxWidth = self.max_x
-        # update formattedText upon channel switch
-        self.formattedText[gc.client.current_channel.id].refresh(
-                newWidth=self.chatWin.getmaxyx()[1])
         self.redrawFrames()
 
     def clearWins(self):
@@ -106,68 +105,68 @@ class CursesUI:
             return
         self.frameWin = curses.newwin(self.max_y,self.max_x, 0,0)
 
-    def makeTopBar(self, resize=False):
+    def makeTopWin(self, resize=False):
         if resize:
-            self.topBar.resize(1,self.max_x)
+            self.topWin.resize(1,self.max_x)
             return
         content = curses.newwin(1,self.max_x, 0,0)
-        self.topBar = content
-        self.topBar.leaveok(True)
+        self.topWin = content
+        self.topWin.leaveok(True)
 
         self.contentWins.append(content)
 
-    def makeBottomBar(self, resize=False):
+    def makeBottomWin(self, resize=False):
         if resize:
-            self.editBar.resize(1,self.max_x)
-            self.editBar.mvwin(self.max_y-1,0)
+            self.editWin.resize(1,self.max_x)
+            self.editWin.mvwin(self.max_y-1,0)
             return
         content = curses.newwin(1,self.max_x, self.max_y-1,0)
         content.keypad(True)
         content.nodelay(True)
-        self.editBar = content
+        self.editWin = content
 
         self.contentWins.append(content)
 
-    def makeLeftBar(self, resize=False):
-        # Bar has 2 elements: frame and content pad
-        width = self.leftBarWidth
+    def makeLeftWin(self, resize=False):
+        # Win has 2 elements: frame and content pad
+        width = self.leftWinWidth
         y_offset = 0
-        if self.topBarVisible:
+        if self.topWinVisible:
             y_offset = 2
 
         if resize:
-            self.leftBar.resize(self.max_y-y_offset-2,width-1)
+            self.leftWin.resize(self.max_y-y_offset-2,width-1)
             return
         content = curses.newwin(self.max_y-y_offset-2,width-1, y_offset,0)
-        self.leftBar = content
-        self.leftBar.leaveok(True)
+        self.leftWin = content
+        self.leftWin.leaveok(True)
 
         self.contentWins.append(content)
 
-    def makeUserBar(self, resize=False):
-        width = self.userBarWidth
+    def makeUserWin(self, resize=False):
+        width = self.userWinWidth
         y_offset = 0
-        if self.topBarVisible:
+        if self.topWinVisible:
             y_offset = 2
 
         if resize:
-            self.userBar.resize(self.max_y-y_offset-2,width-1)
+            self.userWin.resize(self.max_y-y_offset-2,width-1)
             return
         content = curses.newwin(self.max_y-y_offset-2,width-1, y_offset,self.max_x-width)
-        self.userBar = content
-        self.userBar.leaveok(True)
+        self.userWin = content
+        self.userWin.leaveok(True)
 
         self.contentWins.append(content)
 
     def makeChatWin(self, resize=False):
         x_offset = 0;width = self.max_x
-        if settings["show_left_bar"]:
-            x_offset = self.leftBarWidth+1
+        if self.leftWinVisible:
+            x_offset = self.leftWinWidth+1
             width -= x_offset
-        if settings["show_user_bar"]:
-            width -= self.userBarWidth+1
+        if self.userWinVisible:
+            width -= self.userWinWidth+1
         y_offset = 0
-        if settings["show_top_bar"]:
+        if self.topWinVisible:
             y_offset = 2
 
         if resize:
@@ -175,9 +174,10 @@ class CursesUI:
             return
         content = curses.newwin(self.max_y-y_offset-2,width, y_offset,x_offset)
         self.chatWin = content
+        self.chatWinWidth = width
         self.chatWin.leaveok(True)
 
-    def makeDisplay(self, resize=False):
+    def makeDisplay(self, resize=False): #TODO: Make display separate view
         if resize:
             self.displayWin.resize(self.max_y,self.max_x)
             return
@@ -206,15 +206,19 @@ class CursesUI:
     def waitUntilUserExit(self):
         self.makeFrameWin()
         self.makeDisplay()
-        self.leftBarWidth = int(self.max_x // settings["left_bar_divider"])
-        self.userBarWidth = int(self.max_x // settings["user_bar_divider"])
-        if self.topBarVisible:
-            self.makeTopBar()
-        self.makeBottomBar()
-        if self.leftBarVisible:
-            self.makeLeftBar()
-        if self.userBarVisible:
-            self.makeUserBar()
+        try:
+            self.leftWinWidth = int(self.max_x // settings["left_win_divider"])
+            self.userWinWidth = int(self.max_x // settings["user_win_divider"])
+        except:
+            self.leftWinWidth = int(self.max_x // settings["left_bar_divider"])
+            self.userWinWidth = int(self.max_x // settings["user_bar_divider"])
+        if self.topWinVisible:
+            self.makeTopWin()
+        self.makeBottomWin()
+        if self.leftWinVisible:
+            self.makeLeftWin()
+        if self.userWinVisible:
+            self.makeUserWin()
         self.makeChatWin()
         self.redrawFrames()
 
@@ -225,23 +229,23 @@ class CursesUI:
     def redrawFrames(self):
         # redraw top frame
         y_offset = 0
-        if self.topBarVisible and self.separatorsVisible:
+        if self.topWinVisible and self.separatorsVisible:
             y_offset = 1
             self.frameWin.hline(y_offset,0, curses.ACS_HLINE, self.max_x)
         # redraw bottom frame
         self.frameWin.hline(self.max_y-2,0, curses.ACS_HLINE, self.max_x)
         # redraw left frame
-        if self.leftBarVisible and self.separatorsVisible:
-            self.frameWin.vline(y_offset+1,self.leftBarWidth, curses.ACS_VLINE,
+        if self.leftWinVisible and self.separatorsVisible:
+            self.frameWin.vline(y_offset+1,self.leftWinWidth, curses.ACS_VLINE,
                     self.max_y-y_offset-3)
-            self.frameWin.addch(y_offset,self.leftBarWidth, curses.ACS_TTEE)
-            self.frameWin.addch(self.max_y-2,self.leftBarWidth, curses.ACS_BTEE)
+            self.frameWin.addch(y_offset,self.leftWinWidth, curses.ACS_TTEE)
+            self.frameWin.addch(self.max_y-2,self.leftWinWidth, curses.ACS_BTEE)
         # redraw user frame
-        if self.userBarVisible and self.separatorsVisible:
-            self.frameWin.vline(y_offset+1,self.max_x-self.userBarWidth-1, curses.ACS_VLINE,
+        if self.userWinVisible and self.separatorsVisible:
+            self.frameWin.vline(y_offset+1,self.max_x-self.userWinWidth-1, curses.ACS_VLINE,
                     self.max_y-y_offset-3)
-            self.frameWin.addch(y_offset,self.max_x-self.userBarWidth-1, curses.ACS_TTEE)
-            self.frameWin.addch(self.max_y-2,self.max_x-self.userBarWidth-1, curses.ACS_BTEE)
+            self.frameWin.addch(y_offset,self.max_x-self.userWinWidth-1, curses.ACS_TTEE)
+            self.frameWin.addch(self.max_y-2,self.max_x-self.userWinWidth-1, curses.ACS_BTEE)
         self.frameWin.refresh()
 
     def toggleDisplay(self):
@@ -271,22 +275,22 @@ async def draw_screen():
             await asyncio.sleep(0.01)
             continue
         log("Updating")
-        if gc.ui.topBarVisible:
-            await draw_top_bar()
-        if gc.ui.leftBarVisible:
-            await draw_left_bar()
-        if gc.ui.userBarVisible:
-            await draw_user_bar()
+        if gc.ui.topWinVisible:
+            await draw_top_win()
+        if gc.ui.leftWinVisible:
+            await draw_left_win()
+        if gc.ui.userWinVisible:
+            await draw_user_win()
         if gc.server_log_tree is not None:
             await draw_channel_log()
-        await draw_bottom_bar()
+        await draw_edit_win()
         gc.ui.doUpdate = False
     log("draw_screen finished")
     gc.tasksExited += 1
 
-async def draw_top_bar():
-    topBar = gc.ui.topBar
-    width = topBar.getmaxyx()[1]
+async def draw_top_win():
+    topWin = gc.ui.topWin
+    width = topWin.getmaxyx()[1]
     color = gc.ui.colors[settings["server_display_color"]]
 
     serverName = gc.client.current_server.name
@@ -309,17 +313,17 @@ async def draw_top_bar():
     online_text = "Users online: " + online
     onlineOffset = width-len(online_text)-1
 
-    topBar.clear()
+    topWin.clear()
 
-    topBar.addstr(0,0, "Server: ")
-    topBar.addstr(serverName, color)
+    topWin.addstr(0,0, "Server: ")
+    topWin.addstr(serverName, color)
 
-    topBar.addstr(0,topicOffset, topic)
+    topWin.addstr(0,topicOffset, topic)
 
-    topBar.addstr(0,onlineOffset, "Users online: ", color)
-    topBar.addstr(online)
+    topWin.addstr(0,onlineOffset, "Users online: ", color)
+    topWin.addstr(online)
 
-    topBar.refresh()
+    topWin.refresh()
 
 async def set_display(string, attrs=0):
     display = gc.ui.displayWin
@@ -334,9 +338,9 @@ async def set_display(string, attrs=0):
     display.clear()
     gc.ui.toggleDisplay()
 
-async def draw_left_bar():
-    leftBar = gc.ui.leftBar
-    left_bar_width = leftBar.getmaxyx()[1]
+async def draw_left_win():
+    leftWin = gc.ui.leftWin
+    left_win_width = leftWin.getmaxyx()[1]
 
     if gc.ui.separatorsVisible:
         length = 0
@@ -355,7 +359,7 @@ async def draw_left_bar():
 
     channel_logs = quick_sort_channel_logs(channel_logs)
 
-    leftBar.clear()
+    leftWin.clear()
 
     # TODO: Incorperate servers into list
     for idx, clog in enumerate(channel_logs):
@@ -369,17 +373,17 @@ async def draw_left_bar():
         if settings["number_channels"]:
             offset = 3
 
-        if length > left_bar_width-offset:
+        if length > left_win_width-offset:
             if settings["truncate_channels"]:
-                text = text[0:left_bar_width - offset]
+                text = text[0:left_win_width - offset]
             else:
-                text = text[0:left_bar_width - 3 - offset] + "..."
+                text = text[0:left_win_width - 3 - offset] + "..."
 
-        leftBar.move(idx,0)
+        leftWin.move(idx,0)
         if settings["number_channels"]:
-            leftBar.addstr(str(idx+1) + ". ")
+            leftWin.addstr(str(idx+1) + ". ")
         if clog.channel is gc.client.current_channel:
-            leftBar.addstr(text, gc.ui.colors[settings["current_channel_color"]])
+            leftWin.addstr(text, gc.ui.colors[settings["current_channel_color"]])
         else:
             if clog.channel is not channel_logs[0]:
                 pass
@@ -391,14 +395,14 @@ async def draw_left_bar():
                     color = gc.ui.colors[split]|curses.A_BLINK
                 elif "on_" in color:
                     color = gc.ui.colors[color.split("on_")[1]]
-                leftBar.addstr(text, color)
+                leftWin.addstr(text, color)
             elif clog.mentioned_in and settings["blink_mentions"]:
                 color = settings["unread_mention_color"]
                 if "blink_" in color:
                     color = gc.ui.colors[color.split("blink_")[1]]
-                leftBar.addstr(text, color)
+                leftWin.addstr(text, color)
             else:
-                leftBar.addstr(text)
+                leftWin.addstr(text)
 
         # should the server have *too many channels!*, stop them
         # from spilling over the screen
@@ -406,28 +410,28 @@ async def draw_left_bar():
 
     #with gc.term.location(0, start):
     #    print("".join(buffer))
-    leftBar.refresh()
+    leftWin.refresh()
 
-async def draw_user_bar():
-    userBar = gc.ui.userBar
-    height, width = userBar.getmaxyx()
+async def draw_user_win():
+    userWin = gc.ui.userWin
+    height, width = userWin.getmaxyx()
 
-    userBar.clear()
+    userWin.clear()
 
     for idx,member in enumerate(gc.client.current_server.members):
         if idx+2 > height:
-            userBar.addstr(idx,0, "(more)", gc.ui.colors["green"])
+            userWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
             break
         name = member.display_name
         if len(name) >= width:
             name = name[:width-4] + "..."
 
-        userBar.addstr(idx,0, name)
+        userWin.addstr(idx,0, name)
 
-    userBar.refresh()
+    userWin.refresh()
 
-async def draw_bottom_bar():
-    editBar = gc.ui.editBar
+async def draw_edit_win():
+    editWin = gc.ui.editWin
     promptText = gc.client.prompt
     offset = len(promptText)+5
 
@@ -440,20 +444,20 @@ async def draw_bottom_bar():
         hashColor = gc.ui.colors[settings["prompt_hash_color"]]
     promptColor = gc.ui.colors[settings["prompt_color"]]
 
-    editBar.clear()
-    editBar.addstr(0,0, "[", borderColor)
+    editWin.clear()
+    editWin.addstr(0,0, "[", borderColor)
     if not hasHash:
-        editBar.addstr(settings["default_prompt"], promptColor)
+        editWin.addstr(settings["default_prompt"], promptColor)
     else:
-        editBar.addstr("#", hashColor)
-        editBar.addstr(promptText, promptColor)
-    editBar.addstr("]: ", borderColor)
+        editWin.addstr("#", hashColor)
+        editWin.addstr(promptText, promptColor)
+    editWin.addstr("]: ", borderColor)
     try:
-        data = gc.ui.edit.getCurrentData()
+        data = gc.ui.messageEdit.getCurrentData()
     except:
         data = ('', 0)
-    editBar.addstr(0,offset, data[0])
-    editBar.move(0,offset+data[1])
+    editWin.addstr(0,offset, data[0])
+    editWin.move(0,offset+data[1])
 
 async def draw_serverlist():
     display = gc.ui.displayWin
@@ -828,11 +832,6 @@ async def draw_help(terminateAfter=False):
     gc.ui.refreshAll()
     gc.ui.doUpdate = True
 
-def init_channel_formattedText(channel_id):
-    gc.ui.formattedText[channel_id] = \
-            FormattedText(gc.ui.chatWin.getmaxyx()[1], \
-            settings["max_messages"], gc.ui.colors)
-
 async def draw_channel_log():
     chatWin = gc.ui.chatWin
     ft = None
@@ -843,7 +842,7 @@ async def draw_channel_log():
                 if channel_log.channel is gc.client.current_channel:
                     if channel_log.channel not in gc.channels_entered:
                         await gc.client.init_channel()
-                        ft = gc.ui.formattedText[channel_log.channel.id]
+                        ft = gc.ui.views[channel_log.channel.id].formattedText
                         doBreak = True
                         break
                     # if the server has a "category" channel named the same
@@ -851,7 +850,7 @@ async def draw_channel_log():
                     # TODO: private messages are not "text" channeltypes
                     if channel_log.channel.type != ChannelType.text: continue
 
-                    ft = gc.ui.formattedText[channel_log.channel.id]
+                    ft = gc.ui.views[channel_log.channel.id].formattedText
                     if len(ft.messages) > 0 and channel_log.logs[-1].id == \
                             ft.messages[-1].id:
                         doBreak = True
@@ -908,3 +907,4 @@ async def draw_channel_log():
             except:
                 log("Text drawing failed at {}".format(word.content))
         chatWin.refresh()
+

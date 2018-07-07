@@ -1,7 +1,7 @@
 def check_for_updates():
     from utils.globals import gc
     from os import path
-    
+
     if not path.exists(".git"):
         print(gc.term.red("Error: client not started from repo location! Cancelling..."))
         print(gc.term.yellow("You must start the client from its folder to get automatic updates. \n"))

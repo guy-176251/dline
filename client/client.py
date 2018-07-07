@@ -5,10 +5,9 @@ import discord
 from utils.log import log
 from utils.globals import gc, kill
 from utils.settings import settings
-from input.input_handler import init_channel_messageEdit
 from ui.ui_utils import calc_mutations
+from ui.view import init_view
 from ui.formattedText import FormattedText
-from ui.ui import init_channel_formattedText
 
 class Found(Exception):
     pass
@@ -42,7 +41,7 @@ class Client(discord.Client):
             for srv in self.servers:
                 if server.lower() in srv.name.lower():
                     self._current_server = srv
-                    # find first non-ignored channel, set channel, mark flags as False 
+                    # find first non-ignored channel, set channel, mark flags as False
                     def_chan = None
                     lowest = 999
                     for chan in srv.channels:
@@ -102,15 +101,6 @@ class Client(discord.Client):
                         self._current_channel = chl
                         self._prompt = chl.name
                         if len(gc.channels_entered) > 0:
-                            if chl.id in gc.ui.messageEdit:
-                                gc.ui.edit = gc.ui.messageEdit[chl.id]
-                            else:
-                                init_channel_messageEdit(chl)
-                            if chl.id in gc.ui.formattedText:
-                                gc.ui.formattedText[chl.id].refresh(
-                                        newWidth=gc.ui.chatWin.getmaxyx()[1])
-                            else:
-                                init_channel_formattedText(chl.id)
                             chanlog = self.current_channel_log
                             chanlog.unread = False
                             chanlog.mentioned_in = False
@@ -130,15 +120,6 @@ class Client(discord.Client):
         self._current_channel = channel
         self._prompt = channel.name
         if len(gc.channels_entered) > 0:
-            if channel.id in gc.ui.messageEdit:
-                gc.ui.edit = gc.ui.messageEdit[channel.id]
-            else:
-                init_channel_messageEdit(channel)
-            if channel.id in gc.ui.formattedText:
-                gc.ui.formattedText[channel.id].refresh(
-                        newWidth=gc.ui.chatWin.getmaxyx()[1])
-            else:
-                init_channel_formattedText(channel.id)
             chanlog = self.current_channel_log
             chanlog.unread = False
             chanlog.mentioned_in = False
@@ -171,7 +152,7 @@ class Client(discord.Client):
     @property
     def game(self):
         return self._game
-    
+
     async def set_game(self, game):
         self._game = discord.Game(name=game,type=0)
         self._status = discord.Status.online
@@ -236,8 +217,6 @@ class Client(discord.Client):
                 self.messages.append(msg)
                 clog.insert(0, calc_mutations(msg))
             gc.channels_entered.append(clog.channel)
-            gc.ui.formattedText[clog.channel.id] = \
-                    FormattedText(gc.ui.chatWin.getmaxyx()[1], \
-                    settings["max_messages"], gc.ui.colors)
+            init_view(gc, clog.channel) # initialize view
             for msg in clog.logs:
-                gc.ui.formattedText[clog.channel.id].addMessage(msg)
+                gc.ui.views[clog.channel.id].formattedText.addMessage(msg)

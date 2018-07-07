@@ -8,7 +8,7 @@ NO_SETTINGS=False
 try:
     if sys.argv[1] == "--store-token" or sys.argv[1] == "--token":
         NO_SETTINGS=True
-except IndexError: 
+except IndexError:
     pass
 
 class GlobalsContainer:
