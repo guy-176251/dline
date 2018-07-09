@@ -54,7 +54,7 @@ def load_config():
     try:
         with open(path) as f:
             settings = safe_load(f)
-        if "show_user_bar" not in settings:
+        if "show_user_win" not in settings:
             raise OutdatedConfigException
     except YAMLError:
         print("ERROR: Invalid config. Check and try again.")
