@@ -46,6 +46,13 @@ async def key_input():
             while gc.ui.doUpdate:
                 await asyncio.sleep(0.01)
             continue
+        # if ESC is pressed, clear messageEdit buffer
+        elif ch == 27:
+            ch = editWin.getch()
+            if ch in (0x7f, ord('\b'), curses.KEY_BACKSPACE):
+                gc.ui.messageEdit.reset()
+                await ui.draw_edit_win()
+                continue
         await ui.draw_edit_win()
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:

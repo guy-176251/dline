@@ -32,7 +32,8 @@ class CursesUI:
         self.frameWins = []
         self.contentWins = []
 
-        self.messageEdit = MessageEdit()
+        self.messageEdit = None
+        self.start_pos = 0
         self.views = {}
         self.isInitialized = False
         self.areLogsRead = False
@@ -198,9 +199,8 @@ class CursesUI:
     def run(self, screen):
         self.screen = screen
         self.initScreen()
-        maxyx = self.screen.getmaxyx()
-        self.max_y = maxyx[0]
-        self.max_x = maxyx[1]
+        self.max_y, self.max_x = self.screen.getmaxyx()
+        self.messageEdit = MessageEdit(self.max_x)
         self.waitUntilUserExit()
 
     def waitUntilUserExit(self):
@@ -434,6 +434,8 @@ async def draw_edit_win():
     editWin = gc.ui.editWin
     promptText = gc.client.prompt
     offset = len(promptText)+5
+    width = gc.ui.max_x-offset
+    edit = gc.ui.messageEdit
 
     borderColor = gc.ui.colors[settings["prompt_border_color"]]
     hasHash = False
@@ -444,6 +446,7 @@ async def draw_edit_win():
         hashColor = gc.ui.colors[settings["prompt_hash_color"]]
     promptColor = gc.ui.colors[settings["prompt_color"]]
 
+    edit.setPrompt(gc.client.prompt)
     editWin.clear()
     editWin.addstr(0,0, "[", borderColor)
     if not hasHash:
@@ -453,9 +456,11 @@ async def draw_edit_win():
         editWin.addstr(promptText, promptColor)
     editWin.addstr("]: ", borderColor)
     try:
-        data = gc.ui.messageEdit.getCurrentData()
+        text_data, text_data_pos, start_pos = edit.getCurrentData()
     except:
-        data = ('', 0)
+        text_data, text_data_pos, start_pos = ('', 0, 0)
+    pos = text_data_pos-start_pos
+    data = (text_data[start_pos:start_pos+width-1], pos)
     editWin.addstr(0,offset, data[0])
     editWin.move(0,offset+data[1])
 

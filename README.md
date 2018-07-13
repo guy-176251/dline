@@ -1,4 +1,4 @@
-# ![logo_small.png](res/logo/logo_small.png) Discline
+# ![logo_small.png](res/logo/logo_small.png) Discline-curses
 ![status-mostly%20working-green.svg](https://img.shields.io/badge/status-mostly%20working-green.svg)
 ------------------------------
 

@@ -107,9 +107,12 @@ async def on_message(message):
 @gc.client.event
 async def on_message_edit(msg_old, msg_new):
     await gc.client.wait_until_ready()
-    if msg_old.clean_content == msg_new.clean_content: return
-    channellog = gc.client.current_channel
-    ft = gc.ui.formattedText[channellog.id]
+    if msg_old.clean_content == msg_new.clean_content:
+        return
+    clog = gc.client.current_channel
+    if clog is None:
+        return
+    ft = gc.ui.views[clog.id].formattedText
     msg_new.content = msg_new.content + " **(edited)**"
     idx = 0
     while True:
@@ -167,7 +170,6 @@ async def runSimpleHelp():
     await draw_help(terminateAfter=True)
 
 def terminate_curses():
-    log("Test")
     curses.nocbreak()
     gc.ui.screen.keypad(False)
     curses.echo()
