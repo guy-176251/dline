@@ -132,3 +132,4 @@ mistletoe*
 test.py
 traceDiscline.py
 clientTest.py
+threadingTest.py

@@ -16,7 +16,7 @@ async def key_input():
     curses.cbreak()
     curses.noecho()
     editWin = gc.ui.editWin
-    await ui.draw_edit_win()
+    ui.draw_edit_win()
     while not gc.doExit:
         prompt = gc.client.prompt
         ch = editWin.getch()
@@ -51,14 +51,14 @@ async def key_input():
             ch = editWin.getch()
             if ch in (0x7f, ord('\b'), curses.KEY_BACKSPACE):
                 gc.ui.messageEdit.reset()
-                await ui.draw_edit_win()
+                ui.draw_edit_win()
                 continue
-        await ui.draw_edit_win()
+        ui.draw_edit_win()
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
             await input_handler(ret)
             gc.ui.messageEdit.reset()
-        await ui.draw_edit_win()
+        ui.draw_edit_win()
     log("key_input finished")
     gc.tasksExited += 1
 
@@ -99,7 +99,7 @@ async def input_handler(text):
             text = await parseEmoji(text)
         if '@' in text:
             sections = text.lower().strip().split()
-            secs_copy = []
+            sects_copy = []
             for sect in sections:
                 if '@' in sect:
                     for member in gc.client.current_server.members:

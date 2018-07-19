@@ -18,6 +18,7 @@ async def on_incoming_message(msg):
                         await gc.client.init_channel(channel_log.channel)
                     else:
                         channel_log.append(calc_mutations(msg))
+                        gc.ui.channel_log_offset += 1
                     if channel_log.channel is not gc.client.current_channel:
                         if msg.server.me.mention in msg.content:
                             channel_log.mentioned_in = True

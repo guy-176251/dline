@@ -1,7 +1,7 @@
 from blessings import Terminal
 from utils.settings import settings
 from utils.log import log
-from ui.ui import CursesUI
+from utils.threads import UiThread
 import sys
 
 NO_SETTINGS=False
@@ -15,7 +15,8 @@ class GlobalsContainer:
     def __init__(self):
         self.term = Terminal()
         self.client = None
-        self.ui = CursesUI()
+        self.ui_thread = UiThread(self)
+        self.ui = self.ui_thread.ui
         self.server_log_tree = []
         self.channels_entered = []
         self.typingBeingHandled = False

@@ -11,9 +11,9 @@
 
 import sys
 import asyncio
-from utils.log import log
 import curses
 import os
+import threading
 from discord import ChannelType, MessageType
 from input.input_handler import key_input, typing_handler
 from ui.ui import draw_screen, start_ui, draw_help
@@ -21,7 +21,7 @@ from utils.globals import *
 from utils.settings import copy_skeleton, settings
 from utils.updates import check_for_updates
 from utils.token_utils import get_token, store_token
-from utils.log import startLogging, msglog
+from utils.log import log, startLogging, msglog
 from client.serverlog import ServerLog
 from client.channellog import ChannelLog
 from client.on_message import on_incoming_message
@@ -84,7 +84,9 @@ async def on_ready():
             gc.client.prompt = settings["default_channel"].lower()
 
     # start our own coroutines
-    await start_ui()
+    gc.ui_thread.start()
+    while not gc.ui.isInitialized:
+        await asyncio.sleep(0.1)
     loop = asyncio.get_event_loop()
     try:
         loop.create_task(draw_screen())
@@ -139,7 +141,7 @@ async def on_message_delete(msg):
             if serverlog.server == msg.server:
                 for channellog in serverlog.logs:
                     if channellog.channel == msg.channel:
-                        ft = gc.ui.formattedText[channellog.channel.id]
+                        ft = gc.ui.views[channellog.channel.id].formattedText
                         channellog.logs.remove(msg)
                         ft.messages.remove(msg)
                         ft.refresh()

@@ -1,6 +1,7 @@
 import sys
 import asyncio
 import curses, curses.panel
+import threading
 from discord import ChannelType
 from blessings import Terminal
 from input.messageEdit import MessageEdit
@@ -27,8 +28,9 @@ colorNames = {
         'white':curses.COLOR_WHITE+1
 }
 
-class CursesUI:
-    def __init__(self):
+class CursesUi:
+    def __init__(self, lock):
+        self.lock = lock
         self.frameWins = []
         self.contentWins = []
 
@@ -53,6 +55,34 @@ class CursesUI:
         self.topWinVisible = True
         self.leftWinVisible = True
         self.userWinVisible = False
+
+    def run(self, screen):
+        self.screen = screen
+        self.initScreen()
+        self.max_y, self.max_x = self.screen.getmaxyx()
+        self.messageEdit = MessageEdit(self.max_x)
+
+        self.makeFrameWin()
+        self.makeDisplay()
+        try:
+            self.leftWinWidth = int(self.max_x // settings["left_win_divider"])
+            self.userWinWidth = int(self.max_x // settings["user_win_divider"])
+        except:
+            self.leftWinWidth = int(self.max_x // settings["left_bar_divider"])
+            self.userWinWidth = int(self.max_x // settings["user_bar_divider"])
+        if self.topWinVisible:
+            self.makeTopWin()
+        self.makeBottomWin()
+        if self.leftWinVisible:
+            self.makeLeftWin()
+        if self.userWinVisible:
+            self.makeUserWin()
+        self.makeChatWin()
+        self.redrawFrames()
+
+        self.isInitialized = True
+
+        self.refreshAll()
 
     def initScreen(self):
         self.screen.keypad(True)
@@ -196,36 +226,6 @@ class CursesUI:
         self.chatWin.noutrefresh()
         curses.doupdate()
 
-    def run(self, screen):
-        self.screen = screen
-        self.initScreen()
-        self.max_y, self.max_x = self.screen.getmaxyx()
-        self.messageEdit = MessageEdit(self.max_x)
-        self.waitUntilUserExit()
-
-    def waitUntilUserExit(self):
-        self.makeFrameWin()
-        self.makeDisplay()
-        try:
-            self.leftWinWidth = int(self.max_x // settings["left_win_divider"])
-            self.userWinWidth = int(self.max_x // settings["user_win_divider"])
-        except:
-            self.leftWinWidth = int(self.max_x // settings["left_bar_divider"])
-            self.userWinWidth = int(self.max_x // settings["user_bar_divider"])
-        if self.topWinVisible:
-            self.makeTopWin()
-        self.makeBottomWin()
-        if self.leftWinVisible:
-            self.makeLeftWin()
-        if self.userWinVisible:
-            self.makeUserWin()
-        self.makeChatWin()
-        self.redrawFrames()
-
-        self.isInitialized = True
-
-        self.refreshAll()
-
     def redrawFrames(self):
         # redraw top frame
         y_offset = 0
@@ -269,21 +269,21 @@ async def draw_screen():
     gc.ui.doUpdate = True
     while not gc.doExit:
         if not gc.ui.isInitialized:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
             continue
         if not gc.ui.doUpdate:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
             continue
         log("Updating")
         if gc.ui.topWinVisible:
             await draw_top_win()
         if gc.ui.leftWinVisible:
-            await draw_left_win()
+            draw_left_win()
         if gc.ui.userWinVisible:
             await draw_user_win()
         if gc.server_log_tree is not None:
             await draw_channel_log()
-        await draw_edit_win()
+        draw_edit_win()
         gc.ui.doUpdate = False
     log("draw_screen finished")
     gc.tasksExited += 1
@@ -339,6 +339,9 @@ async def set_display(string, attrs=0):
     gc.ui.toggleDisplay()
 
 async def draw_left_win():
+    if threading.get_ident() == threading.main_thread().ident:
+        gc.ui_thread.funcs.append(draw_left_win)
+        return
     leftWin = gc.ui.leftWin
     left_win_width = leftWin.getmaxyx()[1]
 
@@ -430,7 +433,10 @@ async def draw_user_win():
 
     userWin.refresh()
 
-async def draw_edit_win():
+def draw_edit_win():
+    if threading.get_ident() == threading.main_thread().ident:
+        gc.ui_thread.funcs.append(draw_edit_win)
+        return
     editWin = gc.ui.editWin
     promptText = gc.client.prompt
     offset = len(promptText)+5
