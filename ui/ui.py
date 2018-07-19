@@ -338,7 +338,7 @@ async def set_display(string, attrs=0):
     display.clear()
     gc.ui.toggleDisplay()
 
-async def draw_left_win():
+def draw_left_win():
     if threading.get_ident() == threading.main_thread().ident:
         gc.ui_thread.funcs.append(draw_left_win)
         return
