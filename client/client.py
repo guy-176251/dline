@@ -95,17 +95,24 @@ class Client(discord.Client):
         if isinstance(channel, str):
             try:
                 svr = self.current_server
+                channel_found = None
+                channel_score = 0.0
                 for chl in svr.channels:
                     if channel.lower() in chl.name.lower() and \
                             chl.permissions_for(svr.me).read_messages:
-                        self._current_channel = chl
-                        self._prompt = chl.name
-                        if len(gc.channels_entered) > 0:
-                            chanlog = self.current_channel_log
-                            chanlog.unread = False
-                            chanlog.mentioned_in = False
-                            gc.ui.doUpdate = True
-                        return
+                        score = len(channel) / len(chl.name)
+                        if score > channel_score:
+                            channel_found = chl
+                            channel_score = score
+                if channel_found != None:
+                    self._current_channel = channel_found
+                    self._prompt = channel_found.name
+                    if len(gc.channels_entered) > 0:
+                        chanlog = self.current_channel_log
+                        chanlog.unread = False
+                        chanlog.mentioned_in = False
+                        gc.ui.doUpdate = True
+                    return
                 raise RuntimeError("Could not find channel!")
             except RuntimeError as e:
                 log("RuntimeError during channel setting: {}".format(e), logging.error)
