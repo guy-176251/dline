@@ -99,6 +99,7 @@ class Client(discord.Client):
                 channel_score = 0.0
                 for chl in svr.channels:
                     if channel.lower() in chl.name.lower() and \
+                            chl.type == discord.ChannelType.text and \
                             chl.permissions_for(svr.me).read_messages:
                         score = len(channel) / len(chl.name)
                         if score > channel_score:
