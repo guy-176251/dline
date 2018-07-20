@@ -98,13 +98,13 @@ async def input_handler(text):
         if text.count(':')%2 == 0:
             text = await parseEmoji(text)
         if '@' in text:
-            sections = text.lower().strip().split()
+            sections = text.strip().split()
             sects_copy = []
             for sect in sections:
-                if '@' in sect:
+                if len(sect) >= 2 and sect[0] == '@':
                     for member in gc.client.current_server.members:
                         if member is not gc.client.current_server.me and \
-                                sect[1:] in member.display_name.lower():
+                                sect[1:].lower() in member.display_name.lower():
                             sect = "<@!" + member.id + ">"
                 sects_copy.append(sect)
             text = " ".join(sects_copy)
