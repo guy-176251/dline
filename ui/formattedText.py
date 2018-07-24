@@ -94,11 +94,29 @@ class FormattedText:
                     if lineid != len(lines)-1 or (lineid == len(lines)-1 and ttoken[0].endswith('\n')):
                         wtokens.append(('\n', curses.A_NORMAL))
                 continue
+            # process ttoken into wtokens
             words = ttoken[0].split(' ')
-            for idx, word in enumerate(words):
+            idx = 0
+            while idx < len(words):
+                word = words[idx]
                 wordwidth = findWidth(word)
                 if wordwidth < 1:
+                    idx += 1
                     continue
+                # group mentions together
+                if word.startswith('@'):
+                    words_ss = words[idx:] # words subsection
+                    for i in reversed(range(len(words_ss))):
+                        segment = words_ss[:i+1]
+                        if not segment[0]:
+                            continue
+                        if " ".join(segment)[1:].lower() in msg.server.me.display_name.lower():
+                            for ss_word in segment:
+                                words.remove(ss_word)
+                            words.insert(idx, " ".join(segment))
+                            word = words[idx]
+                            wordwidth = findWidth(word)
+                            break
                 # if single word is longer than width
                 if wordwidth >= width:
                     iters = wordwidth//(width-1)
@@ -113,8 +131,10 @@ class FormattedText:
                         else:
                             rng = word[segid*(iterlen-1):]
                             wtokens.append((rng, ttoken[1]))
+                    idx += 1
                     continue
                 wtokens.append((word, ttoken[1]))
+                idx += 1
         #log("wtokens: {}".format(wtokens))
         cpos = 0
         line = Line(True, name, topRole)

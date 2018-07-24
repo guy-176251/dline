@@ -873,6 +873,11 @@ async def draw_channel_log():
         if doBreak:
             break
     lines = ft.getLines()
+    for line in lines:
+        words = []
+        for word in line.words:
+            words.append(word.content)
+        #log("Line: {}".format(" ".join(words)))
     name_offset = 0
     chatWin_height, chatWin_width = chatWin.getmaxyx()
     # upon entering a new channel, scroll all the way down

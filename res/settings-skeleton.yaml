@@ -108,6 +108,8 @@ blink_unreads: true
 # same as above, but for @mentions
 blink_mentions: true
 
+beep_mentions: false
+
 # here you can define your own custom roles - NOTE: text must match exactly!
 # These for example could be "helper" or "trusted", whatever roles
 # your servers use
