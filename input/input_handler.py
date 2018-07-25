@@ -1,9 +1,10 @@
 import asyncio
 import curses
 import logging
-from utils.log import log
+import re
 import discord
 import ui.ui as ui
+from utils.log import log
 from utils.globals import gc, kill
 from utils.settings import settings
 from commands.text_emoticons import check_emoticons
@@ -52,7 +53,7 @@ async def key_input():
             if ch in (0x7f, ord('\b'), curses.KEY_BACKSPACE):
                 gc.ui.messageEdit.reset()
                 ui.draw_edit_win()
-                continue
+            continue
         ui.draw_edit_win()
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
@@ -98,16 +99,29 @@ async def input_handler(text):
         if text.count(':')%2 == 0:
             text = await parseEmoji(text)
         if '@' in text:
-            sections = text.lower().strip().split()
-            sects_copy = []
-            for sect in sections:
-                if '@' in sect:
-                    for member in gc.client.current_server.members:
-                        if member is not gc.client.current_server.me and \
-                                sect[1:] in member.display_name.lower():
-                            sect = "<@!" + member.id + ">"
-                sects_copy.append(sect)
-            text = " ".join(sects_copy)
+            sects = []
+            for sect in text.lower().strip().split('@'):
+                sects.append(sect.split(' '))
+            mentions = []
+            for sect in sects:
+                if not sect:
+                    continue
+                log("sect: {}".format(sect))
+                for member in gc.client.current_server.members:
+                    for i in reversed(range(len(sect))):
+                        segment = sect[:i+1]
+                        if not segment[0]:
+                            continue
+                        if " ".join(segment).lower() in member.display_name.lower():
+                            m = re.search('@'+" ".join(segment), text)
+                            if m is None:
+                                continue
+                            text = text[:m.start()] + '{}' + text[m.end():]
+                            mention = "<@!" + member.id + ">"
+                            mentions.append(mention)
+                            break
+            log("text: {}".format(text))
+            text = text.format(*mentions)
         sent = False
         for i in range(0,3):
             try:

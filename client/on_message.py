@@ -1,4 +1,5 @@
 import asyncio
+import curses
 from ui.ui_utils import calc_mutations
 from utils.log import log
 from utils.globals import gc
@@ -24,6 +25,11 @@ async def on_incoming_message(msg):
                             channel_log.mentioned_in = True
                         else:
                             channel_log.unread = True
+                    if msg.server.me.mention in msg.content and \
+                            "beep_mentions" in settings and \
+                            settings["beep_mentions"]:
+                        curses.beep()
+                        log("Beep!")
                     doBreak = True
                     break
         if doBreak:
