@@ -303,6 +303,7 @@ async def draw_top_win():
         else:
             topic = gc.client.current_channel.name
     except: pass
+    topic = topic.replace("\n", " ")
     if len(topic) >= width//2:
         topic = topic[:width//2-3] + "..."
     topicOffset = width//2-len(topic)//2
