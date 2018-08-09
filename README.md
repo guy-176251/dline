@@ -6,7 +6,7 @@
 
 __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support for Windows comes back
 
-**Note**: You can find proposed features on my [website](http://natosaka.host/discline.html).
+**Note**: You can find a feature list, current bugs, and things I'm currently working on on my [website](http://natosaka.host/discline.html).
 
 ## How to use:
 -------------------------

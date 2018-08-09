@@ -1,5 +1,6 @@
 import sys
 import asyncio
+import time
 import curses, curses.panel
 import threading
 from discord import ChannelType
@@ -50,6 +51,12 @@ class CursesUi:
         self.userWin = None
         self.contentWins = []
         self.frameWin = None
+        # Window drawing locks
+        self.top_win_lock = False
+        self.left_win_lock = False
+        self.edit_win_lock = False
+        self.chat_win_lock = False
+        self.user_win_lock = False
         # Visibility
         self.separatorsVisible = True
         self.topWinVisible = True
@@ -276,19 +283,33 @@ async def draw_screen():
             continue
         log("Updating")
         if gc.ui.topWinVisible:
-            await draw_top_win()
+            draw_top_win()
+            while gc.ui.top_win_lock:
+                asyncio.sleep(0.01)
         if gc.ui.leftWinVisible:
             draw_left_win()
+            while gc.ui.left_win_lock:
+                asyncio.sleep(0.01)
         if gc.ui.userWinVisible:
-            await draw_user_win()
+            draw_user_win()
+            while gc.ui.user_win_lock:
+                asyncio.sleep(0.01)
         if gc.server_log_tree is not None:
-            await draw_channel_log()
+            draw_channel_log()
+            while gc.ui.chat_win_lock:
+                asyncio.sleep(0.01)
         draw_edit_win()
+        while gc.ui.edit_win_lock:
+            asyncio.sleep(0.01)
         gc.ui.doUpdate = False
     log("draw_screen finished")
     gc.tasksExited += 1
 
-async def draw_top_win():
+def draw_top_win():
+    if threading.get_ident() == threading.main_thread().ident:
+        gc.ui_thread.funcs.append(draw_top_win)
+        return
+    gc.ui.top_win_lock = True
     topWin = gc.ui.topWin
     width = topWin.getmaxyx()[1]
     color = gc.ui.colors[settings["server_display_color"]]
@@ -309,7 +330,7 @@ async def draw_top_win():
     topicOffset = width//2-len(topic)//2
 
     # sleep required to get accurate user count
-    await asyncio.sleep(0.05)
+    time.sleep(0.05)
     online = str(gc.client.online)
     online_text = "Users online: " + online
     onlineOffset = width-len(online_text)-1
@@ -325,6 +346,7 @@ async def draw_top_win():
     topWin.addstr(online)
 
     topWin.refresh()
+    gc.ui.top_win_lock = False
 
 async def set_display(string, attrs=0):
     display = gc.ui.displayWin
@@ -343,8 +365,9 @@ def draw_left_win():
     if threading.get_ident() == threading.main_thread().ident:
         gc.ui_thread.funcs.append(draw_left_win)
         return
+    gc.ui.left_win_lock = True
     leftWin = gc.ui.leftWin
-    left_win_width = leftWin.getmaxyx()[1]
+    left_win_height, left_win_width = leftWin.getmaxyx()
 
     if gc.ui.separatorsVisible:
         length = 0
@@ -367,6 +390,12 @@ def draw_left_win():
 
     # TODO: Incorperate servers into list
     for idx, clog in enumerate(channel_logs):
+        # should the server have *too many channels!*, stop them
+        # from spilling over the screen
+        if idx == left_win_height-1:
+            leftWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
+            break
+
         # don't print categories or voice chats
         # TODO: this will break on private messages
         if clog.channel.type != ChannelType.text: continue
@@ -408,15 +437,16 @@ def draw_left_win():
             else:
                 leftWin.addstr(text)
 
-        # should the server have *too many channels!*, stop them
-        # from spilling over the screen
-        if idx  == gc.ui.max_y - 2 - settings["margin"]: break
-
     #with gc.term.location(0, start):
     #    print("".join(buffer))
     leftWin.refresh()
+    gc.ui.left_win_lock = False
 
-async def draw_user_win():
+def draw_user_win():
+    if threading.get_ident() == threading.main_thread().ident:
+        gc.ui_thread.funcs.append(draw_user_win)
+        return
+    gc.ui.user_win_lock = True
     userWin = gc.ui.userWin
     height, width = userWin.getmaxyx()
 
@@ -433,11 +463,13 @@ async def draw_user_win():
         userWin.addstr(idx,0, name)
 
     userWin.refresh()
+    gc.ui.user_win_lock = False
 
 def draw_edit_win():
     if threading.get_ident() == threading.main_thread().ident:
         gc.ui_thread.funcs.append(draw_edit_win)
         return
+    gc.ui.edit_win_lock = True
     editWin = gc.ui.editWin
     promptText = gc.client.prompt
     offset = len(promptText)+5
@@ -470,6 +502,7 @@ def draw_edit_win():
     data = (text_data[start_pos:start_pos+width-1], pos)
     editWin.addstr(0,offset, data[0])
     editWin.move(0,offset+data[1])
+    gc.ui.edit_win_lock = False
 
 async def draw_serverlist():
     display = gc.ui.displayWin
@@ -844,7 +877,11 @@ async def draw_help(terminateAfter=False):
     gc.ui.refreshAll()
     gc.ui.doUpdate = True
 
-async def draw_channel_log():
+def draw_channel_log():
+    if threading.get_ident() == threading.main_thread().ident:
+        gc.ui_thread.funcs.append(draw_channel_log)
+        return
+    gc.ui.chat_win_lock = True
     chatWin = gc.ui.chatWin
     ft = None
     doBreak = False
@@ -853,7 +890,13 @@ async def draw_channel_log():
             for channel_log in server_log.logs:
                 if channel_log.channel is gc.client.current_channel:
                     if channel_log.channel not in gc.channels_entered:
-                        await gc.client.init_channel()
+                        gc.client.async_funcs.append(gc.client.init_channel)
+                        # Wait for init_channel to be entered
+                        while not gc.init_channel_lock:
+                            time.sleep(0.01)
+                        # Wait for init_channel to be end
+                        while gc.init_channel_lock:
+                            time.sleep(0.01)
                         ft = gc.ui.views[channel_log.channel.id].formattedText
                         doBreak = True
                         break
@@ -888,7 +931,7 @@ async def draw_channel_log():
     elif len(lines) > chatWin_height and \
             gc.ui.channel_log_offset > len(lines)-chatWin_height:
         gc.ui.channel_log_offset = len(lines)-chatWin_height
-    elif gc.ui.channel_log_offset <= -1:
+    elif gc.ui.channel_log_offset < -1:
         gc.ui.channel_log_offset = 0
     color = 0
     chatWin.clear()
@@ -898,7 +941,7 @@ async def draw_channel_log():
     for idx, line in enumerate(
             lines[gc.ui.channel_log_offset:gc.ui.channel_log_offset+chatWin_height]):
         if line.isFirst:
-            author_color = await get_role_color(line.topRole, gc.ui.colors)
+            author_color = get_role_color(line.topRole, gc.ui.colors)
             chatWin.addstr(idx,0, line.user + ": ", author_color)
             name_offset = chatWin.getyx()[1]
         elif name_offset == 0:
@@ -924,4 +967,4 @@ async def draw_channel_log():
             except:
                 log("Text drawing failed at {}".format(word.content))
         chatWin.refresh()
-
+    gc.ui.chat_win_lock = False

@@ -17,6 +17,7 @@ class GlobalsContainer:
         self.client = None
         self.ui_thread = UiThread(self)
         self.ui = self.ui_thread.ui
+        self.init_channel_lock = False
         self.server_log_tree = []
         self.channels_entered = []
         self.typingBeingHandled = False

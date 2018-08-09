@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 # ------------------------------------------------------- #
 #                                                         #
-# Discline                                                #
+# Discline-curses                                         #
 #                                                         #
-# http://github.com/NatTupper/Discline                    #
+# http://github.com/NatTupper/Discline-curses             #
 #                                                         #
 # Licensed under GNU GPLv3                                #
 #                                                         #

@@ -11,7 +11,7 @@ from discord import MessageType, Member
 from utils.log import log
 from utils.settings import settings
 
-async def get_role_color(r, colors):
+def get_role_color(r, colors):
     color = ""
     try:
         for role in settings["custom_roles"]:
