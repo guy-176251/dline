@@ -1,26 +1,18 @@
-async def check_emoticons(client, cmd):
+def check_emoticons(client, cmd):
     if cmd == "shrug":
-        try: await client.send_message(client.current_channel, "¯\_(ツ)_/¯")
-        except: pass
+        return "¯\_(ツ)_/¯"
     elif cmd == "tableflip":
-        try: await client.send_message(client.current_channel, "(╯°□°）╯︵ ┻━┻")
-        except: pass
+        return "(╯°□°）╯︵ ┻━┻"
     elif cmd == "unflip":
-        try: await client.send_message(client.current_channel, "┬──┬ ノ( ゜-゜ノ)")
-        except: pass
+        return "┬──┬ ノ( ゜-゜ノ)"
     elif cmd == "zoidberg":
-        try: await client.send_message(client.current_channel, "(/) (°,,°) (/)")
-        except: pass
+        return "(/) (°,,°) (/)"
     elif cmd == "lenny":
-        try: await client.send_message(client.current_channel, "( ͡° ͜ʖ ͡°)")
-        except: pass
+        return "( ͡° ͜ʖ ͡°)"
     elif cmd == "lennyx5":
-        try: await client.send_message(client.current_channel, "( ͡°( ͡° ͜ʖ( ͡° ͜ʖ ͡°)ʖ ͡°) ͡°)")
-        except: pass
+        return "( ͡°( ͡° ͜ʖ( ͡° ͜ʖ ͡°)ʖ ͡°) ͡°)"
     elif cmd == "glasses":
-        try: await client.send_message(client.current_channel, "(•_•) ( •_•)>⌐■-■ (⌐■_■)")
-        except: pass
+        return "(•_•) ( •_•)>⌐■-■ (⌐■_■)"
     elif cmd == "walking_my_mods":
-        try: await client.send_message(client.current_channel, "⌐( ͡° ͜ʖ ͡°) ╯╲___卐卐卐卐")
-        except: pass
+        return "⌐( ͡° ͜ʖ ͡°) ╯╲___卐卐卐卐"
 

@@ -2,8 +2,9 @@ import asyncio
 from utils.globals import gc
 from utils.quicksort import quick_sort_channel_logs
 from utils.settings import settings
+import ui.ui as ui
 
-async def channel_jump(arg):
+def channel_jump(arg):
     logs = []
 
     num = int(arg[1:]) - 1
@@ -30,4 +31,3 @@ async def channel_jump(arg):
     logs[num].unread = False
     logs[num].mentioned_in = False
     gc.ui.channel_log_offset = -1
-    gc.ui.doUpdate = True

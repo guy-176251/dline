@@ -6,6 +6,7 @@ from utils.log import log
 from utils.globals import gc, kill
 from utils.settings import settings
 from ui.ui_utils import calc_mutations
+import ui.ui as ui
 from ui.view import init_view
 from ui.formattedText import FormattedText
 
@@ -22,17 +23,25 @@ class Client(discord.Client):
         self._prompt = ""
         self._status = None
         self._game = None
-        self.funcs = []
         self.async_funcs = []
-        asyncio.get_event_loop().create_task(self.run())
+        self.locks = []
         super().__init__(*args, **kwargs)
 
-    async def run(self):
+    async def run_calls(self):
+        self.locks = []
         while not gc.doExit:
-            if len(self.funcs) > 0:
-                self.funcs.pop()()
             if len(self.async_funcs) > 0:
-                await self.async_funcs.pop()()
+                call = self.async_funcs.pop()
+                func = call[0]
+                self.locks.append(func.__name__)
+                args = []
+                if len(call) > 1:
+                    args = call[1:]
+                try:
+                    await func(*args)
+                    self.locks.remove(func.__name__)
+                except:
+                    log("Could not await {}".format(func))
             await asyncio.sleep(0.01)
 
     @property
@@ -123,7 +132,6 @@ class Client(discord.Client):
                         chanlog = self.current_channel_log
                         chanlog.unread = False
                         chanlog.mentioned_in = False
-                        gc.ui.doUpdate = True
                     return
                 raise RuntimeError("Could not find channel!")
             except RuntimeError as e:
@@ -212,7 +220,6 @@ class Client(discord.Client):
             await super().send_typing(channel)
 
     async def init_channel(self, channel=None):
-        gc.init_channel_lock = True
         clog = None
         if channel is None:
             clog = self.current_channel_log
@@ -240,10 +247,8 @@ class Client(discord.Client):
             except discord.Forbidden:
                 log("Cannot enter channel {}: Forbidden.".format(clog.channel.name))
                 init_view(gc, clog.channel)
-                gc.init_channel_lock = False
                 return
             gc.channels_entered.append(clog.channel)
             init_view(gc, clog.channel) # initialize view
             for msg in clog.logs:
                 gc.ui.views[clog.channel.id].formattedText.addMessage(msg)
-        gc.init_channel_lock = False

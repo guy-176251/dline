@@ -2,6 +2,7 @@ import asyncio
 import curses
 import logging
 import re
+import time
 import discord
 import ui.ui as ui
 from utils.log import log
@@ -12,17 +13,21 @@ from commands.sendfile import send_file
 from commands.channel_jump import channel_jump
 from input.messageEdit import MessageEdit
 
-async def key_input():
+def key_input():
     # if the next two aren't here, input does not work
     curses.cbreak()
     curses.noecho()
     editWin = gc.ui.editWin
-    ui.draw_edit_win()
+    call = (ui.draw_edit_win, True)
+    gc.ui_thread.funcs.append(call)
+    while call in gc.ui_thread.funcs or \
+            call[0].__name__ in gc.ui_thread.locks:
+        time.sleep(0.1)
     while not gc.doExit:
         prompt = gc.client.prompt
         ch = editWin.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
-            await asyncio.sleep(0.01)
+            time.sleep(0.01)
             continue
         if chr(ch) != '\n':
             gc.typingBeingHandled = True
@@ -31,56 +36,62 @@ async def key_input():
             continue
         if ch == curses.KEY_PPAGE:
             gc.ui.channel_log_offset -= settings["scroll_lines"]
-            gc.ui.doUpdate = True
-            while gc.ui.doUpdate:
-                await asyncio.sleep(0.01)
+            ui.draw_screen()
             continue
         elif ch == curses.KEY_NPAGE:
             gc.ui.channel_log_offset += settings["scroll_lines"]
-            gc.ui.doUpdate = True
-            while gc.ui.doUpdate:
-                await asyncio.sleep(0.01)
+            ui.draw_screen()
             continue
         elif ch == curses.KEY_RESIZE:
             gc.ui.resize()
-            gc.ui.doUpdate = True
-            while gc.ui.doUpdate:
-                await asyncio.sleep(0.01)
+            ui.draw_screen()
             continue
         # if ESC is pressed, clear messageEdit buffer
         elif ch == 27:
             ch = editWin.getch()
             if ch in (0x7f, ord('\b'), curses.KEY_BACKSPACE):
                 gc.ui.messageEdit.reset()
-                ui.draw_edit_win()
+                call = (ui.draw_edit_win, True)
+                gc.ui_thread.funcs.append(call)
+                while call in gc.ui_thread.funcs or \
+                        call[0].__name__ in gc.ui_thread.locks:
+                    time.sleep(0.1)
             continue
-        ui.draw_edit_win()
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
-            await input_handler(ret)
+            input_handler(ret)
             gc.ui.messageEdit.reset()
-        ui.draw_edit_win()
+        call = (ui.draw_edit_win, True)
+        gc.ui_thread.funcs.append(call)
+        while not gc.doExit and (call in gc.ui_thread.funcs or \
+                call[0].__name__ in gc.ui_thread.locks):
+            time.sleep(0.1)
     log("key_input finished")
     gc.tasksExited += 1
 
-async def typing_handler():
+def typing_handler():
     if not settings["send_is_typing"]: return
 
+    log("typing_handler started")
     while not gc.doExit:
         if gc.typingBeingHandled:
-            await gc.client.send_typing(gc.client.current_channel)
+            call = (gc.client.send_typing, gc.client.current_channel)
+            gc.client.async_funcs.append(call)
+            while not gc.doExit and (call in gc.client.async_funcs or \
+                    call[0].__name__ in gc.client.locks):
+                time.sleep(0.1)
             for second in range(50):
                 if gc.doExit:
                     break
-                await asyncio.sleep(0.1)
+                time.sleep(0.1)
             gc.typingBeingHandled = False
             if gc.doExit:
                 break
-        await asyncio.sleep(0.1)
+        time.sleep(0.1)
     log("typing_handler finished")
     gc.tasksExited += 1
 
-async def input_handler(text):
+def input_handler(text):
     # Must be a command
     if text.startswith(settings["prefix"]):
         text = text[1:]
@@ -92,12 +103,12 @@ async def input_handler(text):
         else:
             command = text
             arg = None
-        await parseCommand(command, arg)
+        parseCommand(command, arg)
     # Must be text
     else:
         # Emoji
         if text.count(':')%2 == 0:
-            text = await parseEmoji(text)
+            text = parseEmoji(text)
         if '@' in text:
             sects = []
             for sect in text.lower().strip().split('@'):
@@ -125,13 +136,17 @@ async def input_handler(text):
         sent = False
         for i in range(0,3):
             try:
-                await gc.client.send_message(gc.client.current_channel, text)
+                call = (gc.client.send_message, gc.client.current_channel, text)
+                gc.client.async_funcs.append(call)
+                while call in gc.client.async_funcs and \
+                        call[0].__name__ in gc.client.locks:
+                    time.sleep(0.1)
                 sent = True
                 break
             except:
-                await asyncio.sleep(3)
+                time.sleep(3)
 
-async def parseCommand(command, arg=None):
+def parseCommand(command, arg=None):
     if command in ("server", 's'):
         prev_server = gc.client.current_server
         gc.client.set_current_server(arg)
@@ -139,20 +154,31 @@ async def parseCommand(command, arg=None):
             return
         log("changed server")
         gc.ui.channel_log_offset = -1
-        gc.ui.doUpdate = True
-        while gc.ui.doUpdate:
-            await asyncio.sleep(0.01)
+        ui.draw_screen()
     elif command in ("channel", 'c'):
         gc.client.current_channel = arg
+        ui.draw_screen()
     elif command == "nick":
         try:
-            await gc.client.change_nickname(gc.client.current_server.me, arg)
+            call = (gc.client.change_nickname, gc.client.current_server.me, arg)
+            gc.client.async_funcs.append(call)
+            while call in gc.client.async_funcs or \
+                    call[0].__name__ in gc.client.locks:
+                time.sleep(0.1)
         except:
             pass
     elif command == "game":
-        await gc.client.set_game(arg)
+        call = (gc.client.set_game, arg)
+        gc.client.async_funcs.append(call)
+        while call in gc.client.async_funcs or \
+                call[0].__name__ in gc.client.locks:
+            time.sleep(0.1)
     elif command == "file":
-        await send_file(gc.client, arg)
+        call = (send_file, gc.client, arg)
+        gc.client.async_funcs.append(call)
+        while call in gc.client.async_funcs or \
+                call[0].__name__ in gc.client.locks:
+            time.sleep(0.1)
     elif command == "status":
         status = arg.lower()
         if status in ("away", "afk"):
@@ -165,27 +191,32 @@ async def parseCommand(command, arg=None):
 
     if arg is None:
         if command in ("refresh", "update"):
-            gc.ui.doUpdate = True
-            while gc.ui.doUpdate:
-                await asyncio.sleep(0.01)
+            ui.draw_screen()
             log("Manual update done", logging.info)
         elif command in ("quit", "exit"):
-            try: gc.tasks.append(asyncio.get_event_loop().create_task(kill()))
+            try: gc.exit_thread.start()
             except SystemExit: pass
-        elif command in ("help", 'h'): await ui.draw_help()
-        elif command in ("servers", "servs"): await ui.draw_serverlist()
-        elif command in ("channels", "chans"): await ui.draw_channellist()
-        elif command == "emojis": await ui.draw_emojilist()
-        elif command in ("users", "members"): await ui.draw_userlist()
+        elif command in ("help", 'h'): ui.draw_help()
+        elif command in ("servers", "servs"): ui.draw_serverlist()
+        elif command in ("channels", "chans"): ui.draw_channellist()
+        elif command == "emojis": ui.draw_emojilist()
+        elif command in ("users", "members"): ui.draw_userlist()
         elif command[0] == 'c':
             try:
                 if command[1].isdigit():
-                    await channel_jump(command)
+                    channel_jump(command)
+                    ui.draw_screen()
             except IndexError:
                 pass
-        await check_emoticons(gc.client, command)
+        else:
+            call = (gc.client.send_message, gc.client.current_channel, \
+                    check_emoticons(gc.client, command))
+            gc.client.async_funcs.append(call)
+            while call in gc.client.async_funcs or \
+                    call[0].__name__ in gc.client.locks:
+                time.sleep(0.1)
 
-async def parseEmoji(text):
+def parseEmoji(text):
     if settings["has_nitro"]:
         for emoji in gc.client.get_all_emojis():
             short_name = ':' + emoji.name + ':'

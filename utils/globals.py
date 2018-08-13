@@ -1,8 +1,11 @@
+import time
+import sys
+import asyncio
+import threading
 from blessings import Terminal
 from utils.settings import settings
 from utils.log import log
 from utils.threads import UiThread
-import sys
 
 NO_SETTINGS=False
 try:
@@ -16,13 +19,14 @@ class GlobalsContainer:
         self.term = Terminal()
         self.client = None
         self.ui_thread = UiThread(self)
+        self.typing_handler_thread = None
+        self.key_input_thread = None
+        self.exit_thread = None
         self.ui = self.ui_thread.ui
-        self.init_channel_lock = False
         self.server_log_tree = []
         self.channels_entered = []
         self.typingBeingHandled = False
         self.doExit = False
-        self.tasks = []
         self.tasksExited = 0
 
     def initClient(self):
@@ -36,13 +40,15 @@ class GlobalsContainer:
 gc = GlobalsContainer()
 
 # kills the program and all its elements gracefully
-async def kill():
+def kill():
     # attempt to cleanly close our loops
-    import asyncio
-    from os import system
+    threads = (gc.ui_thread, gc.typing_handler_thread, gc.key_input_thread)
     gc.doExit = True
-    while gc.tasksExited < 3:
-        await asyncio.sleep(0.01)
+    for tid,thread in enumerate(threads):
+        while thread.is_alive():
+            time.sleep(0.1)
+    loop = gc.client.loop
+    loop.create_task(gc.client.close())
     sys.exit(0) #return us to main()
 
 # returns a "Channel" object from the given string

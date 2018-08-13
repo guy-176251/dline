@@ -1,6 +1,7 @@
 import asyncio
 import curses
 from ui.ui_utils import calc_mutations
+import ui.ui as ui
 from utils.log import log
 from utils.globals import gc
 from utils.settings import settings
@@ -36,5 +37,5 @@ async def on_incoming_message(msg):
             break
 
     # redraw the screen if new msg is in current server
-    if msg.server is gc.client.current_server:
-        gc.ui.doUpdate = True
+    if msg.channel is gc.client.current_channel:
+        ui.draw_screen()

@@ -16,10 +16,11 @@ import os
 import threading
 from discord import ChannelType, MessageType
 from input.input_handler import key_input, typing_handler
-from ui.ui import draw_screen, start_ui, draw_help
+from ui.ui import draw_screen, draw_help
 from utils.globals import *
 from utils.settings import copy_skeleton, settings
 from utils.updates import check_for_updates
+from utils.threads import WorkerThread
 from utils.token_utils import get_token, store_token
 from utils.log import log, startLogging, msglog
 from client.serverlog import ServerLog
@@ -84,16 +85,20 @@ async def on_ready():
             gc.client.prompt = settings["default_channel"].lower()
 
     # start our own coroutines
+    gc.client.loop.create_task(gc.client.run_calls())
     gc.ui_thread.start()
     while not gc.ui.isInitialized:
         await asyncio.sleep(0.1)
-    loop = asyncio.get_event_loop()
-    try:
-        loop.create_task(draw_screen())
-        loop.create_task(key_input())
-        loop.create_task(typing_handler())
-    except SystemExit: pass
-    except KeyboardInterrupt: pass
+
+    await gc.client.init_channel()
+    draw_screen()
+
+    gc.key_input_thread = WorkerThread(gc, key_input)
+    gc.typing_handler_thread = WorkerThread(gc, typing_handler)
+    gc.exit_thread = WorkerThread(gc, kill)
+
+    gc.key_input_thread.start()
+    gc.typing_handler_thread.start()
 
     global init_complete
     init_complete = True
@@ -126,8 +131,8 @@ async def on_message_edit(msg_old, msg_new):
         idx += 1
     ft.refresh()
 
-    if init_complete:
-        gc.ui.doUpdate = True
+    if init_complete and msg_old.channel is gc.client.current_channel:
+        draw_screen()
 
 @gc.client.event
 async def on_message_delete(msg):
@@ -146,7 +151,8 @@ async def on_message_delete(msg):
                         ft.messages.remove(msg)
                         ft.refresh()
                         log("Deleted, updating")
-                        gc.ui.doUpdate = True
+                        if msg.channel is gc.client.current_channel:
+                            draw_screen()
                         return
     except:
         # if the message cannot be found, an exception will be raised
@@ -156,20 +162,9 @@ async def on_message_delete(msg):
         pass
     log("Could not delete message: {}".format(msg.clean_content))
 
-def runTest(test):
-    # input_handler.py
-    if test == "input":
-        inputTestLauncher()
-    elif test == "formatting":
-        formattingTestLauncher()
-    elif test == "scrolling":
-        scrollingTestLauncher()
-    elif test == "sendrecv":
-        sendrecvTestLauncher()
-
 async def runSimpleHelp():
-    await start_ui()
-    await draw_help(terminateAfter=True)
+    curses.wrapper(gc.ui.run)
+    draw_help(terminateAfter=True)
 
 def terminate_curses():
     curses.nocbreak()
@@ -222,16 +217,9 @@ def main():
     # start the client
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(gc.client.start(token, bot=False))
+        loop.run_until_complete(gc.client.run(token, bot=False))
     except:
-        pass
-
-    # stop the client and close the event loop
-    try:
-        gc.client.close()
         loop.close()
-    except:
-        pass
 
     if gc.ui.isInitialized:
         terminate_curses()
