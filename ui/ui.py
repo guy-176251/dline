@@ -125,6 +125,7 @@ class CursesUi:
         self.makeDisplay(resize=True)
         self.messageEdit.termWidth = self.messageEdit.width = self.max_x
         self.redrawFrames()
+        draw_screen()
 
     def clearWins(self):
         self.frameWin.clear()

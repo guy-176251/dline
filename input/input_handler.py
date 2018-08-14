@@ -157,6 +157,7 @@ def parseCommand(command, arg=None):
         ui.draw_screen()
     elif command in ("channel", 'c'):
         gc.client.current_channel = arg
+        gc.ui.channel_log_offset = -1
         ui.draw_screen()
     elif command == "nick":
         try:

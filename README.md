@@ -11,6 +11,8 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 ## How to use:
 -------------------------
 
+**Note**: Python 3.7 does not work with discord.py on pip. Please use Python 3.5 or 3.6
+
 1. Install the dependencies:
 
     `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe==0.6.2`
@@ -25,13 +27,9 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
     * Open your browser's developer console. (Normally `F12` or `CTRL-SHIFT-I`)
 
-    * Look for "storage" or "local storage", then find the discord url.
+    * Go into "network" and hit F5. Type "v6" in the filter field
 
-    * Clicking this will show you a list of variables. Look for a line that looks like:
-
-        `"token = 322332r093fwaf032f90323f32f903f23wfa"`
-
-    If you're having troubles, google around, there's a few guides on the net.
+	* Find the "access-token" entry and scroll down to authorization. This is your token.
 
     If all else fails, join the dev discord and we'll be glad to help!
 
