@@ -888,8 +888,11 @@ def draw_channel_log():
     name_offset = 0
     chatWin_height, chatWin_width = chatWin.getmaxyx()
     # upon entering a new channel, scroll all the way down
-    if gc.ui.channel_log_offset == -1 and len(lines) > chatWin_height:
-        gc.ui.channel_log_offset = len(lines) - chatWin_height
+    if gc.ui.channel_log_offset == -1:
+        if len(lines) > chatWin_height:
+            gc.ui.channel_log_offset = len(lines) - chatWin_height
+        else:
+            gc.ui.channel_log_offset = 0
     # check to see if scrolling is out of bounds
     elif len(lines) > chatWin_height and \
             gc.ui.channel_log_offset > len(lines)-chatWin_height:

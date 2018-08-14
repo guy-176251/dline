@@ -22,7 +22,7 @@ def key_input():
     gc.ui_thread.funcs.append(call)
     while call in gc.ui_thread.funcs or \
             call[0].__name__ in gc.ui_thread.locks:
-        time.sleep(0.1)
+        time.sleep(0.01)
     while not gc.doExit:
         prompt = gc.client.prompt
         ch = editWin.getch()
@@ -55,7 +55,7 @@ def key_input():
                 gc.ui_thread.funcs.append(call)
                 while call in gc.ui_thread.funcs or \
                         call[0].__name__ in gc.ui_thread.locks:
-                    time.sleep(0.1)
+                    time.sleep(0.01)
             continue
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
@@ -65,7 +65,7 @@ def key_input():
         gc.ui_thread.funcs.append(call)
         while not gc.doExit and (call in gc.ui_thread.funcs or \
                 call[0].__name__ in gc.ui_thread.locks):
-            time.sleep(0.1)
+            time.sleep(0.01)
     log("key_input finished")
     gc.tasksExited += 1
 
