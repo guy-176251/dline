@@ -71,6 +71,11 @@ class CursesUi:
         except:
             self.leftWinWidth = int(self.max_x // settings["left_bar_divider"])
             self.userWinWidth = int(self.max_x // settings["user_bar_divider"])
+        if self.leftWinWidth < 10:
+            self.leftWinWidth = 10
+        if self.userWinWidth < 10:
+            self.userWinWidth = 10
+
         if self.topWinVisible:
             self.makeTopWin()
         self.makeBottomWin()
@@ -396,6 +401,8 @@ def draw_left_win():
         offset = 0
         if settings["number_channels"]:
             offset = 3
+            if idx >= 9:
+                offset = 4
 
         if length > left_win_width-offset:
             if settings["truncate_channels"]:

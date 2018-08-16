@@ -86,7 +86,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 ------------------------
 
 * git (if you want automatic updates)
-* [Python 3.5+](https://www.python.org/downloads/)
+* [Python 3.5 or 3.6](https://www.python.org/downloads/)
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [blessings.py](https://pypi.python.org/pypi/blessings/)
 * [PyYAML](https://pypi.python.org/pypi/PyYAML/)
