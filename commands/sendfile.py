@@ -1,20 +1,30 @@
+import curses
+import time
+from os import path
 from getpass import getuser
 from utils.globals import gc
 from ui.ui import set_display
 
-async def send_file(client, filepath):
+def send_file(filepath):
 
     # try to open the file exactly as user inputs it
-    try:
-        await client.send_file(client.current_channel, filepath)
-    except:
+    if path.exists(filepath):
+        call = (gc.client.send_file, gc.client.current_channel, filepath)
+        gc.client.async_funcs.append(call)
+        while call in gc.client.async_funcs or \
+                call[0].__name__ in gc.client.locks:
+            time.sleep(0.1)
+    elif path.exists("/home/" + getuser() + "/" + filepath):
         # assume the user ommited the prefix of the dir path,
         # try to load it starting from user's home directory:
-        try:
-            filepath = "/home/" + getuser() + "/" + filepath
-            await client.send_file(client.current_channel, filepath)
-        except:
-            # Either a bad file path, the file was too large,
-            # or encountered a connection problem during upload
-            msg = "Error: Bad filepath"
-            await set_display(msg, curses.A_BOLD|gc.ui.colors["red"])
+        filepath = "/home/" + getuser() + "/" + filepath
+        call = (gc.client.send_file, gc.client.current_channel, filepath)
+        gc.client.async_funcs.append(call)
+        while call in gc.client.async_funcs or \
+                call[0].__name__ in gc.client.locks:
+            time.sleep(0.1)
+    else:
+        # Either a bad file path, the file was too large,
+        # or encountered a connection problem during upload
+        msg = "Error: Bad filepath"
+        set_display(msg, curses.A_BOLD|gc.ui.colors["red"])

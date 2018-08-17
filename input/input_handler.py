@@ -117,7 +117,6 @@ def input_handler(text):
             for sect in sects:
                 if not sect:
                     continue
-                log("sect: {}".format(sect))
                 for member in gc.client.current_server.members:
                     for i in reversed(range(len(sect))):
                         segment = sect[:i+1]
@@ -131,7 +130,6 @@ def input_handler(text):
                             mention = "<@!" + member.id + ">"
                             mentions.append(mention)
                             break
-            log("text: {}".format(text))
             text = text.format(*mentions)
         sent = False
         for i in range(0,3):
@@ -175,11 +173,7 @@ def parseCommand(command, arg=None):
                 call[0].__name__ in gc.client.locks:
             time.sleep(0.1)
     elif command == "file":
-        call = (send_file, gc.client, arg)
-        gc.client.async_funcs.append(call)
-        while call in gc.client.async_funcs or \
-                call[0].__name__ in gc.client.locks:
-            time.sleep(0.1)
+        send_file(arg)
     elif command == "status":
         status = arg.lower()
         if status in ("away", "afk"):
@@ -188,7 +182,11 @@ def parseCommand(command, arg=None):
             status = "dnd"
 
         if status in ("online", "offline", "idle", "dnd"):
-            gc.client.status = status
+            call = (gc.client.set_status, status)
+            gc.client.async_funcs.append(call)
+            while call in gc.client.async_funcs or \
+                    call[0].__name__ in gc.client.locks:
+                time.sleep(0.1)
 
     if arg is None:
         if command in ("refresh", "update"):

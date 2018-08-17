@@ -348,10 +348,11 @@ def draw_top_win():
 
     topWin.noutrefresh()
 
-async def set_display(string, attrs=0):
+def set_display(string, attrs=0):
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
-    display.addstr(string, attrs)
+    display.addstr(string + '\n\n', attrs)
+    display.addstr("(press q to quit this dialog)")
     display.refresh()
     while True:
         ch = display.getch()
@@ -360,6 +361,7 @@ async def set_display(string, attrs=0):
         time.sleep(0.1)
     display.clear()
     gc.ui.toggleDisplay()
+    draw_screen()
 
 def draw_left_win():
     leftWin = gc.ui.leftWin

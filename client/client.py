@@ -197,8 +197,7 @@ class Client(discord.Client):
     @property
     def status(self):
         return self._status
-    @status.setter
-    async def status(self, status):
+    async def set_status(self, status):
         if status == "online":
             self._status = discord.Status.online
         elif status == "offline":
@@ -209,11 +208,15 @@ class Client(discord.Client):
             self._status = discord.Status.dnd
 
         if self._game is not None and self._game != "":
-            try: await self.change_presence(game=self._game, status=self._status, afk=False)
-            except: pass
+            try:
+                await self.change_presence(game=self._game, status=self._status, afk=False)
+            except:
+                pass
         else:
-            try: await self.change_presence(status=self._status, afk=False)
-            except: pass
+            try:
+                await self.change_presence(status=self._status, afk=False)
+            except:
+                pass
 
     async def send_typing(self, channel):
         if channel.permissions_for(self.current_server.me).send_messages:
