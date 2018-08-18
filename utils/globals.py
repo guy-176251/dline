@@ -23,7 +23,7 @@ class GlobalsContainer:
         self.key_input_thread = None
         self.exit_thread = None
         self.ui = self.ui_thread.ui
-        self.server_log_tree = []
+        self.guild_log_tree = []
         self.channels_entered = []
         self.typingBeingHandled = False
         self.doExit = False
@@ -53,16 +53,16 @@ def kill():
 
 # returns a "Channel" object from the given string
 async def string2channel(channel):
-    for srv in gc.client.servers:
-        if srv.name == channel.server.name:
+    for srv in gc.client.guilds:
+        if srv.name == channel.guild.name:
             for chan in srv.channels:
                 if chan.name == channel:
                     return chan
 
 # returns a "Channellog" object from the given string
 async def get_channel_log(channel):
-    for srvlog in gc.server_log_tree:
-        if srvlog.name.lower() == channel.server.name.lower():
+    for srvlog in gc.guild_log_tree:
+        if srvlog.name.lower() == channel.guild.name.lower():
             for chanlog in srvlog.logs:
                 if chanlog.name.lower() == channel.name.lower():
                     return chanlog

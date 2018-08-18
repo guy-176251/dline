@@ -75,7 +75,7 @@ def typing_handler():
     log("typing_handler started")
     while not gc.doExit:
         if gc.typingBeingHandled:
-            call = (gc.client.send_typing, gc.client.current_channel)
+            call = (gc.client.current_channel.trigger_typing,)
             gc.client.async_funcs.append(call)
             while not gc.doExit and (call in gc.client.async_funcs or \
                     call[0].__name__ in gc.client.locks):
@@ -117,7 +117,7 @@ def input_handler(text):
             for sect in sects:
                 if not sect:
                     continue
-                for member in gc.client.current_server.members:
+                for member in gc.client.current_guild.members:
                     for i in reversed(range(len(sect))):
                         segment = sect[:i+1]
                         if not segment[0]:
@@ -134,7 +134,7 @@ def input_handler(text):
         sent = False
         for i in range(0,3):
             try:
-                call = (gc.client.send_message, gc.client.current_channel, text)
+                call = (gc.client.current_channel.send, text)
                 gc.client.async_funcs.append(call)
                 while call in gc.client.async_funcs and \
                         call[0].__name__ in gc.client.locks:
@@ -145,12 +145,12 @@ def input_handler(text):
                 time.sleep(3)
 
 def parseCommand(command, arg=None):
-    if command in ("server", 's'):
-        prev_server = gc.client.current_server
-        gc.client.set_current_server(arg)
-        if gc.client.current_server is prev_server:
+    if command in ('guild', 'server', 's'):
+        prev_guild = gc.client.current_guild
+        gc.client.set_current_guild(arg)
+        if gc.client.current_guild is prev_guild:
             return
-        log("changed server")
+        log("changed guild")
         gc.ui.channel_log_offset = -1
         ui.draw_screen()
     elif command in ("channel", 'c'):
@@ -159,15 +159,16 @@ def parseCommand(command, arg=None):
         ui.draw_screen()
     elif command == "nick":
         try:
-            call = (gc.client.change_nickname, gc.client.current_server.me, arg)
+            call = (gc.client.current_guild.me.edit, {'nick':arg})
             gc.client.async_funcs.append(call)
             while call in gc.client.async_funcs or \
                     call[0].__name__ in gc.client.locks:
                 time.sleep(0.1)
         except:
             pass
-    elif command == "game":
-        call = (gc.client.set_game, arg)
+        return
+    elif command in ("game", "activity"):
+        call = (gc.client.set_activity, arg)
         gc.client.async_funcs.append(call)
         while call in gc.client.async_funcs or \
                 call[0].__name__ in gc.client.locks:
@@ -196,7 +197,7 @@ def parseCommand(command, arg=None):
             try: gc.exit_thread.start()
             except SystemExit: pass
         elif command in ("help", 'h'): ui.draw_help()
-        elif command in ("servers", "servs"): ui.draw_serverlist()
+        elif command in ("guilds", "servers", "servs"): ui.draw_guildlist()
         elif command in ("channels", "chans"): ui.draw_channellist()
         elif command == "emojis": ui.draw_emojilist()
         elif command in ("users", "members"): ui.draw_userlist()
@@ -208,7 +209,7 @@ def parseCommand(command, arg=None):
             except IndexError:
                 pass
         else:
-            call = (gc.client.send_message, gc.client.current_channel, \
+            call = (gc.client.current_channel.send, \
                     check_emoticons(gc.client, command))
             gc.client.async_funcs.append(call)
             while call in gc.client.async_funcs or \
@@ -222,9 +223,9 @@ def parseEmoji(text):
             if short_name in text:
                 full_name = "<:{}:{}>".format(emoji.name, emoji.id)
                 text = text.replace(short_name, full_name)
-    elif gc.client.current_server.emojis is not None and \
-            len(gc.client.current_server.emojis) > 0:
-        for emoji in gc.client.current_server.emojis:
+    elif gc.client.current_guild.emojis is not None and \
+            len(gc.client.current_guild.emojis) > 0:
+        for emoji in gc.client.current_guild.emojis:
             short_name = ':' + emoji.name + ':'
             if short_name in text:
                 full_name = "<:{}:{}>".format(emoji.name, emoji.id)

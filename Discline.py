@@ -14,7 +14,7 @@ import asyncio
 import curses
 import os
 import threading
-from discord import ChannelType, MessageType
+from discord import TextChannel, MessageType
 from input.input_handler import key_input, typing_handler
 from ui.ui import draw_screen, draw_help
 from utils.globals import *
@@ -23,7 +23,7 @@ from utils.updates import check_for_updates
 from utils.threads import WorkerThread
 from utils.token_utils import get_token, store_token
 from utils.log import log, startLogging, msglog
-from client.serverlog import ServerLog
+from client.guildlog import GuildLog
 from client.channellog import ChannelLog
 from client.on_message import on_incoming_message
 from client.client import Client
@@ -43,27 +43,27 @@ async def on_ready():
     else:
         gc.client.prompt = '~'
 
-    if settings["default_game"] is not None:
-        await gc.client.set_game(settings["default_game"])
+    if settings["default_activity"] is not None:
+        await gc.client.set_activity(settings["default_activity"])
 
-    for server in gc.client.servers:
-        # Null check to check server availability
-        if server is None:
+    for guild in gc.client.guilds:
+        # Null check to check guild availability
+        if guild is None:
             continue
         serv_logs = []
-        for channel in server.channels:
+        for channel in guild.channels:
             # Null checks to test for bugged out channels
-            if channel is None or channel.type is None:
-                continue
+            #if channel is None or channel.type is None:
+            #    continue
             # Null checks for bugged out members
-            if server.me is None or server.me.id is None \
-                    or channel.permissions_for(server.me) is None:
+            if guild.me is None or guild.me.id is None \
+                    or channel.permissions_for(guild.me) is None:
                 continue
-            if channel.type == ChannelType.text:
-                    if channel.permissions_for(server.me).read_messages:
+            if isinstance(channel, TextChannel):
+                    if channel.permissions_for(guild.me).read_messages:
                         try: # try/except in order to 'continue' out of multiple for loops
                             for serv_key in settings["channel_ignore_list"]:
-                                if serv_key["server_name"].lower() == server.name.lower():
+                                if serv_key["guild_name"].lower() == guild.name.lower():
                                     for name in serv_key["ignores"]:
                                         if channel.name.lower() == name.lower():
                                             raise Found
@@ -72,12 +72,12 @@ async def on_ready():
                             continue
 
         # add the channellog to the tree
-        gc.server_log_tree.append(ServerLog(server, serv_logs))
+        gc.guild_log_tree.append(GuildLog(guild, serv_logs))
 
-    if settings["default_server"] is not None:
-        gc.client.set_current_server(settings["default_server"])
-        if gc.client.current_server is None:
-            print("ERROR: default_server not found!")
+    if settings["default_guild"] is not None:
+        gc.client.set_current_guild(settings["default_guild"])
+        if gc.client.current_guild is None:
+            print("ERROR: default_guild not found!")
             raise KeyboardInterrupt
             return
         if settings["default_channel"] is not None:
@@ -119,7 +119,7 @@ async def on_message_edit(msg_old, msg_new):
     clog = gc.client.current_channel
     if clog is None:
         return
-    ft = gc.ui.views[clog.id].formattedText
+    ft = gc.ui.views[str(clog.id)].formattedText
     msg_new.content = msg_new.content + " **(edited)**"
     idx = 0
     while True:
@@ -138,15 +138,15 @@ async def on_message_edit(msg_old, msg_new):
 async def on_message_delete(msg):
     log("Attempting to delete")
     await gc.client.wait_until_ready()
-    # TODO: PM's have 'None' as a server -- fix this later
-    if msg.server is None: return
+    # TODO: PM's have 'None' as a guild -- fix this later
+    if msg.guild is None: return
 
     try:
-        for serverlog in gc.server_log_tree:
-            if serverlog.server == msg.server:
-                for channellog in serverlog.logs:
+        for guildlog in gc.guild_log_tree:
+            if guildlog.guild == msg.guild:
+                for channellog in guildlog.logs:
                     if channellog.channel == msg.channel:
-                        ft = gc.ui.views[channellog.channel.id].formattedText
+                        ft = gc.ui.views[str(channellog.channel.id)].formattedText
                         channellog.logs.remove(msg)
                         ft.messages.remove(msg)
                         ft.refresh()

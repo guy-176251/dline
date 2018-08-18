@@ -11,11 +11,9 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 ## How to use:
 -------------------------
 
-**Note**: Python 3.7 does not work with discord.py on pip. Please use Python 3.5 or 3.6
-
 1. Install the dependencies:
 
-    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe==0.6.2`
+    `sudo pip3 install asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe==0.6.2`
 
 2. Clone the repo
 
@@ -29,7 +27,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
     * Go into "network" and hit F5. Type "v6" in the filter field
 
-	* Find the "access-token" entry and scroll down to authorization. This is your token.
+    * Find the "access-token" entry and scroll down to authorization. This is your token.
 
     If all else fails, join the dev discord and we'll be glad to help!
 
@@ -50,14 +48,14 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 --------------------------
 
 * /channel to switch channel
-* /server to switch server
-* /nick to change nickname (per server)
+* /guild to switch guild
+* /nick to change nickname (per guild)
 * typing without a leading prefix will submit to current chat
 * "<USER> is typing..." support
 * private channels
 * colored output, with user definable colors and custom roles
 * Channel logs update when users edit messages
-* /channels, /servers, /users to view information
+* /channels, /guilds, /users to view information
 * /game to update the "Now playing: " status
 * use /help to see more commands
 * unicode emoji displayal support
@@ -86,7 +84,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 ------------------------
 
 * git (if you want automatic updates)
-* [Python 3.5 or 3.6](https://www.python.org/downloads/)
+* [Python 3.5+](https://www.python.org/downloads/)
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [blessings.py](https://pypi.python.org/pypi/blessings/)
 * [PyYAML](https://pypi.python.org/pypi/PyYAML/)
@@ -95,11 +93,11 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
 **To install dependencies**:
 
-1. Download Python 3.5/3.6 from the link above
+1. Download Python 3.5+ from the link above
 2. Install `pip3`, normally called `python3-pip` in package managers
 3. Download the dependencies using pip with the following command:
 
-    `sudo pip3 install asyncio discord.py blessings pyyaml mistletoe`
+    `sudo pip3 install asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe`
 
 
 ### Color Customization
@@ -159,7 +157,7 @@ making me feel good inside. ;)
 If you'd like to contribute, pull requests are __*always*__ welcome!
 
 If you would like to get more info on what could be done or to discuss the
-project in general, come join the discord server at: https://discord.gg/rBGQMTk
+project in general, come join the discord guild at: https://discord.gg/rBGQMTk
 
 ### FAQ
 -------------------------

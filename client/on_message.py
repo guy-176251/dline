@@ -10,11 +10,11 @@ async def on_incoming_message(msg):
 
     # TODO: make sure it isn't a private message
 
-    # find the server/channel it belongs to and add it
+    # find the guild/channel it belongs to and add it
     doBreak = False
-    for server_log in gc.server_log_tree:
-        if server_log.server == msg.server:
-            for channel_log in server_log.logs:
+    for guild_log in gc.guild_log_tree:
+        if guild_log.guild == msg.guild:
+            for channel_log in guild_log.logs:
                 if channel_log.channel == msg.channel:
                     if channel_log.channel not in gc.channels_entered:
                         await gc.client.init_channel(channel_log.channel)
@@ -22,11 +22,11 @@ async def on_incoming_message(msg):
                         channel_log.append(calc_mutations(msg))
                         gc.ui.channel_log_offset += 1
                     if channel_log.channel is not gc.client.current_channel:
-                        if msg.server.me.mention in msg.content:
+                        if msg.guild.me.mention in msg.content:
                             channel_log.mentioned_in = True
                         else:
                             channel_log.unread = True
-                    if msg.server.me.mention in msg.content and \
+                    if msg.guild.me.mention in msg.content and \
                             "beep_mentions" in settings and \
                             settings["beep_mentions"]:
                         curses.beep()
@@ -36,6 +36,6 @@ async def on_incoming_message(msg):
         if doBreak:
             break
 
-    # redraw the screen if new msg is in current server
+    # redraw the screen if new msg is in current guild
     if msg.channel is gc.client.current_channel:
         ui.draw_screen()

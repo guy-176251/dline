@@ -75,8 +75,12 @@ class FormattedText:
         offset = findWidth(name)+2
         width = gc.ui.chatWinWidth-offset
 
+        complete_msg = [msg.clean_content]
+        if msg.attachments:
+            for attachment in reversed(msg.attachments):
+                complete_msg.append(attachment.url)
         # Tokens grouped by type (type tokens)
-        ttokens = parseText(msg.clean_content, gc.ui.colors)
+        ttokens = parseText("\n".join(complete_msg), gc.ui.colors)
         #log("ttokens: {}".format(ttokens))
         # Separate tokens by word (word tokens)
         wtokens = []
@@ -110,7 +114,7 @@ class FormattedText:
                         segment = words_ss[:i+1]
                         if not segment[0]:
                             continue
-                        if " ".join(segment)[1:].lower() in msg.server.me.display_name.lower():
+                        if " ".join(segment)[1:].lower() in msg.guild.me.display_name.lower():
                             for ss_word in segment:
                                 words.remove(ss_word)
                             words.insert(idx, " ".join(segment))

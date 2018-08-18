@@ -4,8 +4,8 @@
 #       like max_messages=-1 will break the client. Duh.
 # -------------------------------------------------------------------------
 
-# the default server which will be joined upon startup - CASE SENSITIVE!
-default_server: Discline
+# the default guild which will be joined upon startup - CASE SENSITIVE!
+default_guild: Discline
 # the default channel which will be joined upon startup - CASE SENSITIVE!
 default_channel: test_bed
 
@@ -19,7 +19,7 @@ has_nitro: false
 default_prompt: "~"
 
 # the default 'playing ' status in discord
-default_game: Discline
+default_activity: Discline
 
 # used for various things, your preference
 arrays_start_at_zero: false
@@ -81,7 +81,7 @@ message_log: false
 # Or: you can say "on_<color>" to make it the background (ex: 'on_red')
 # Or: you can say "blink_<color>" to have it flash (ex: 'blink_blue')
 separator_color: white
-server_display_color: cyan
+guild_display_color: cyan
 prompt_color: white
 prompt_hash_color: red
 prompt_border_color: magenta
@@ -112,7 +112,7 @@ beep_mentions: false
 
 # here you can define your own custom roles - NOTE: text must match exactly!
 # These for example could be "helper" or "trusted", whatever roles
-# your servers use
+# your guilds use
 custom_roles:
 - name: admin
   color: magenta
@@ -129,11 +129,11 @@ custom_roles:
 # Follow the format as below.
 # Note it is TWO spaces, not a tab!
 channel_ignore_list:
-- server_name: server name
+- guild_name: guild name
   ignores:
   - some_channel
   - some_other_channel
-- server_name: another server name
+- guild_name: another guild name
   ignores:
   - foo
   - bar

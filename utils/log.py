@@ -21,12 +21,12 @@ def msglog(message):
             return
     except:
         return
-    server_name = message.server.name.replace('/','_')
+    guild_name = message.guild.name.replace('/','_')
     channel_name = message.channel.name
     author_name = message.author.display_name
     content = message.clean_content
     date_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-    dirpath = "~/.config/Discline/logs/" + server_name
+    dirpath = "~/.config/Discline/logs/" + guild_name
 
     os.makedirs(os.path.expanduser(dirpath), exist_ok=True)
     with open("{}/{}.log".format(os.path.expanduser(dirpath), channel_name), 'a') as f:

@@ -3,7 +3,7 @@ from discord import Status
 
 # On call of the /users command, this will print
 # out a nicely sorted, colored list of all users
-# connected to the clients current server and pipe
+# connected to the clients current guild and pipe
 # it to the system pager, (in this case `less`)
 
 class UserList:

@@ -17,8 +17,8 @@ def channel_jump(arg):
     if num <= -1:
         num = 0
 
-    for slog in gc.server_log_tree:
-        if slog.server is gc.client.current_server:
+    for slog in gc.guild_log_tree:
+        if slog.guild is gc.client.current_guild:
             for clog in slog.logs:
                 logs.append(clog)
 

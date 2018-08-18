@@ -1,4 +1,4 @@
-from discord import ChannelType
+from discord import TextChannel, DMChannel
 
 # Wrapper class to make dealing with logs easier
 class ChannelLog():
@@ -9,8 +9,8 @@ class ChannelLog():
         self._logs = list(logs)
 
     @property
-    def server(self):
-        return self._channel.server
+    def guild(self):
+        return self._channel.guild
 
     @property
     def channel(self):
@@ -22,9 +22,9 @@ class ChannelLog():
 
     @property
     def name(self):
-        if self._channel.type == ChannelType.text:
+        if isinstance(self._channel, TextChannel):
             return self._channel.name
-        elif self._channel.type == ChannelType.private:
+        elif isinstance(self._channel, DMChannel):
             name = self._channel.name
             if name is None:
                 name = self_channel.recipients[0].name
@@ -34,7 +34,7 @@ class ChannelLog():
 
     @property
     def index(self):
-        if self._channel.type == ChannelType.text:
+        if isinstance(self._channel, TextChannel):
             return self._channel.position
 
     def append(self, message):

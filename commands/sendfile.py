@@ -2,6 +2,7 @@ import curses
 import time
 from os import path
 from getpass import getuser
+import discord
 from utils.globals import gc
 from ui.ui import set_display
 
@@ -9,7 +10,7 @@ def send_file(filepath):
 
     # try to open the file exactly as user inputs it
     if path.exists(filepath):
-        call = (gc.client.send_file, gc.client.current_channel, filepath)
+        call = (gc.client.current_channel.send, {'file':discord.File(filepath)})
         gc.client.async_funcs.append(call)
         while call in gc.client.async_funcs or \
                 call[0].__name__ in gc.client.locks:
@@ -18,7 +19,7 @@ def send_file(filepath):
         # assume the user ommited the prefix of the dir path,
         # try to load it starting from user's home directory:
         filepath = "/home/" + getuser() + "/" + filepath
-        call = (gc.client.send_file, gc.client.current_channel, filepath)
+        call = (gc.client.current_channel.send, {'file':discord.File(filepath)})
         gc.client.async_funcs.append(call)
         while call in gc.client.async_funcs or \
                 call[0].__name__ in gc.client.locks:

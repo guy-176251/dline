@@ -3,7 +3,7 @@ import asyncio
 import time
 import curses, curses.panel
 import threading
-from discord import ChannelType
+from discord import TextChannel
 from blessings import Terminal
 from input.messageEdit import MessageEdit
 from utils.log import log
@@ -297,7 +297,7 @@ def draw_screen():
         while call in gc.ui_thread.funcs or \
                 call[0].__name__ in gc.ui_thread.locks:
             time.sleep(0.01)
-    if gc.server_log_tree is not None:
+    if gc.guild_log_tree is not None:
         call = (draw_channel_log,)
         gc.ui_thread.funcs.append(call)
         while call in gc.ui_thread.funcs or \
@@ -313,9 +313,9 @@ def draw_screen():
 def draw_top_win():
     topWin = gc.ui.topWin
     width = topWin.getmaxyx()[1]
-    color = gc.ui.colors[settings["server_display_color"]]
+    color = gc.ui.colors[settings["guild_display_color"]]
 
-    serverName = gc.client.current_server.name
+    guildName = gc.client.current_guild.name
 
     topic = ""
     try:
@@ -338,8 +338,8 @@ def draw_top_win():
 
     topWin.erase()
 
-    topWin.addstr(0,0, "Server: ")
-    topWin.addstr(serverName, color)
+    topWin.addstr(0,0, "Guild: ")
+    topWin.addstr(guildName, color)
 
     topWin.addstr(0,topicOffset, topic)
 
@@ -373,11 +373,11 @@ def draw_left_win():
 
         sep_color = gc.ui.colors[settings["separator_color"]]
 
-    # Create a new list so we can preserve the server's channel order
+    # Create a new list so we can preserve the guild's channel order
     channel_logs = []
 
-    for servlog in gc.server_log_tree:
-        if servlog.server is gc.client.current_server:
+    for servlog in gc.guild_log_tree:
+        if servlog.guild is gc.client.current_guild:
             for chanlog in servlog.logs:
                 channel_logs.append(chanlog)
             break
@@ -386,9 +386,9 @@ def draw_left_win():
 
     leftWin.erase()
 
-    # TODO: Incorperate servers into list
+    # TODO: Incorperate guilds into list
     for idx, clog in enumerate(channel_logs):
-        # should the server have *too many channels!*, stop them
+        # should the guild have *too many channels!*, stop them
         # from spilling over the screen
         if idx == left_win_height-1:
             leftWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
@@ -396,7 +396,8 @@ def draw_left_win():
 
         # don't print categories or voice chats
         # TODO: this will break on private messages
-        if clog.channel.type != ChannelType.text: continue
+        if not isinstance(clog.channel, TextChannel):
+            continue
         text = clog.name
         length = len(text)
 
@@ -445,7 +446,7 @@ def draw_user_win():
 
     userWin.erase()
 
-    for idx,member in enumerate(gc.client.current_server.members):
+    for idx,member in enumerate(gc.client.current_guild.members):
         if idx+2 > height:
             userWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
             break
@@ -494,12 +495,12 @@ def draw_edit_win(update=False):
     if update:
         curses.doupdate()
 
-def draw_serverlist():
+def draw_guildlist():
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
-    # Write serverlist to screen
-    if len(gc.client.servers) == 0:
-        display.addstr("Error: You are not in any servers.", gc.ui.colors["red"])
+    # Write guildlist to screen
+    if len(gc.client.guilds) == 0:
+        display.addstr("Error: You are not in any guilds.", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -510,10 +511,10 @@ def draw_serverlist():
         return
 
     buf = []
-    for slog in gc.server_log_tree:
+    for slog in gc.guild_log_tree:
         name = slog.name
 
-        if slog.server is gc.client.current_server:
+        if slog.guild is gc.client.current_guild:
             buf.append((name, gc.ui.colors[settings["current_channel_color"]]))
             continue
 
@@ -545,7 +546,7 @@ def draw_serverlist():
     line_offset = 0
     while True:
         display.clear()
-        display.addstr(0,0, "Available Servers:", gc.ui.colors["yellow"])
+        display.addstr(0,0, "Available Guilds:", gc.ui.colors["yellow"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for serv_id, serv in enumerate(buf[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = serv[1]
@@ -563,7 +564,7 @@ def draw_serverlist():
                 line_offset = 0
             elif len(buf) > (gc.ui.max_y-5) and line_offset > (len(buf)-(gc.ui.max_y-5)):
                 line_offset = len(buf)-(gc.ui.max_y-5)
-        time.sleep(0.1)
+        time.sleep(0.01)
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     draw_screen()
@@ -571,9 +572,9 @@ def draw_serverlist():
 def draw_channellist():
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
-    # Write serverlist to screen
-    if len(gc.client.servers) == 0:
-        display.addstr("Error: You are not in any servers.", gc.ui.colors["red"])
+    # Write guildlist to screen
+    if len(gc.client.guilds) == 0:
+        display.addstr("Error: You are not in any guilds.", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -583,8 +584,8 @@ def draw_channellist():
         gc.ui.toggleDisplay()
         return
 
-    if len(gc.client.current_server.channels) == 0:
-        display.addstr("Error: Does this server not have any channels?", gc.ui.colors["red"])
+    if len(gc.client.current_guild.channels) == 0:
+        display.addstr("Error: Does this guild not have any channels?", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -594,19 +595,19 @@ def draw_channellist():
         gc.ui.toggleDisplay()
         return
 
-    channels = quick_sort_channels(list(gc.client.current_server.channels))
+    channels = quick_sort_channels(list(gc.client.current_guild.channels))
 
     buf = []
     for channel in channels:
-        if channel.type is ChannelType.text and \
-                channel.permissions_for(channel.server.me).read_messages:
+        if isinstance(channel, TextChannel) and \
+                channel.permissions_for(channel.guild.me).read_messages:
             buf.append((channel.name, 0))
 
     line_offset = 0
     while True:
         display.clear()
         display.addstr(0,0, "Available channels in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_guild.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for chan_id, chan in enumerate(buf[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = chan[1]
@@ -624,7 +625,7 @@ def draw_channellist():
                 line_offset = 0
             elif len(buf) > (gc.ui.max_y-5) and line_offset > (len(buf)-(gc.ui.max_y-5)):
                 line_offset = len(buf)-(gc.ui.max_y-5)
-        time.sleep(0.1)
+        time.sleep(0.01)
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     draw_screen()
@@ -632,9 +633,9 @@ def draw_channellist():
 def draw_emojilist():
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
-    # Write serverlist to screen
-    if len(gc.client.servers) == 0:
-        display.addstr("Error: You are not in any servers.", gc.ui.colors["red"])
+    # Write guildlist to screen
+    if len(gc.client.guilds) == 0:
+        display.addstr("Error: You are not in any guilds.", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -642,25 +643,26 @@ def draw_emojilist():
             time.sleep(0.1)
         display.clear()
         gc.ui.toggleDisplay()
+        draw_screen()
         return
 
-    server_name = gc.client.current_server.name
+    guild_name = gc.client.current_guild.name
 
     emojis = []
-    server_emojis = None
+    guild_emojis = None
 
-    try: server_emojis = gc.client.current_server.emojis
+    try: guild_emojis = gc.client.current_guild.emojis
     except: pass
 
-    if server_emojis is not None and server_emojis != "":
-        for emoji in server_emojis:
+    if guild_emojis is not None and guild_emojis != "":
+        for emoji in guild_emojis:
             emojis.append((':' + emoji.name + ':', gc.ui.colors["yellow"]))
 
     line_offset = 0
     while True:
         display.clear()
         display.addstr(0,0, "Available emojis in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_guild.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for emoji_id, emoji in enumerate(emojis[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = emoji[1]
@@ -678,7 +680,7 @@ def draw_emojilist():
                 line_offset = 0
             elif len(emojis) > (gc.ui.max_y-5) and line_offset > (len(emojis)-(gc.ui.max_y-5)):
                 line_offset = len(emojis)-(gc.ui.max_y-5)
-        time.sleep(0.1)
+        time.sleep(0.01)
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     draw_screen()
@@ -686,8 +688,8 @@ def draw_emojilist():
 def draw_userlist():
     display = gc.ui.displayWin
     gc.ui.toggleDisplay()
-    if len(gc.client.servers) == 0:
-        display.addstr("Error: You are not in any servers.", gc.ui.colors["red"])
+    if len(gc.client.guilds) == 0:
+        display.addstr("Error: You are not in any guilds.", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -695,10 +697,11 @@ def draw_userlist():
             time.sleep(0.1)
         display.clear()
         gc.ui.toggleDisplay()
+        draw_screen()
         return
 
-    if len(gc.client.current_server.channels) == 0:
-        display.addstr("Error: Does this server not have any channels?", gc.ui.colors["red"])
+    if len(gc.client.current_guild.channels) == 0:
+        display.addstr("Error: Does this guild not have any channels?", gc.ui.colors["red"])
         while True:
             ch = display.getch()
             if ch == ord('q'):
@@ -706,6 +709,7 @@ def draw_userlist():
             time.sleep(0.1)
         display.clear()
         gc.ui.toggleDisplay()
+        draw_screen()
         return
 
     nonroles = UserList(gc.ui.colors)
@@ -714,8 +718,8 @@ def draw_userlist():
     bots = UserList(gc.ui.colors)
     everything_else = UserList(gc.ui.colors)
 
-    for member in gc.client.current_server.members:
-        if member is None: continue # happens if a member left the server
+    for member in gc.client.current_guild.members:
+        if member is None: continue # happens if a member left the guild
 
         if member.top_role.name.lower() == "admin":
             admins.add(member, " - (Admin)")
@@ -723,7 +727,7 @@ def draw_userlist():
             mods.add(member, " - (Mod)")
         elif member.top_role.name.lower() == "bot":
             bots.add(member, " - (Bot)")
-        elif member.top_role.is_everyone:
+        elif member.top_role.position == 0:
             nonroles.add(member, "")
         else:
             everything_else.add(member, " - " + member.top_role.name)
@@ -752,7 +756,7 @@ def draw_userlist():
     while True:
         display.clear()
         display.addstr(0,0, "Members in ", gc.ui.colors["yellow"])
-        display.addstr(gc.client.current_server.name, gc.ui.colors["magenta"])
+        display.addstr(gc.client.current_guild.name, gc.ui.colors["magenta"])
         display.hline(1,0, curses.ACS_HLINE, gc.ui.max_x)
         for user_id, user in enumerate(buf[line_offset:line_offset+(gc.ui.max_y-5)]):
             color = user[1]
@@ -770,7 +774,7 @@ def draw_userlist():
                 line_offset = 0
             elif len(buf) > (gc.ui.max_y-5) and line_offset > (len(buf)-(gc.ui.max_y-5)):
                 line_offset = len(buf)-(gc.ui.max_y-5)
-        time.sleep(0.1)
+        time.sleep(0.01)
     gc.ui.toggleDisplay()
     gc.ui.refreshAll()
     draw_screen()
@@ -797,23 +801,23 @@ def draw_help(terminateAfter=False):
         [("-----", gc.ui.colors["red"])],
         [("/channel", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("switch to channel - (alias: c)", 0)],
-        [("/server", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("switch server - (alias: s)", 0)],
+        [("/guild", gc.ui.colors["yellow"]),
+            ('-', gc.ui.colors["cyan"]), ("switch guild - (alias: s)", 0)],
         [("Note: These commands can now fuzzy-find!", gc.ui.colors["cyan"])],
         [],
-        [("/servers", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("list available servers", 0)],
+        [("/guilds", gc.ui.colors["yellow"]),
+            ('-', gc.ui.colors["cyan"]), ("list available guilds", 0)],
         [("/channels", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("list available channels", 0)],
         [("/users", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("list server users", 0)],
+            ('-', gc.ui.colors["cyan"]), ("list guild users", 0)],
         [("/emojis", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("list server emojis", 0)],
+            ('-', gc.ui.colors["cyan"]), ("list guild emojis", 0)],
         [],
         [("/nick", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("change your server nick", 0)],
-        [("/game", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("change your game status", 0)],
+            ('-', gc.ui.colors["cyan"]), ("change your guild nick", 0)],
+        [("/game or /activity", gc.ui.colors["yellow"]),
+            ('-', gc.ui.colors["cyan"]), ("change your activity status", 0)],
         [("/file", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("upload a file via path", 0)],
         [("/status", gc.ui.colors["yellow"]),
@@ -860,7 +864,7 @@ def draw_help(terminateAfter=False):
                 line_offset = 0
             elif len(buf) > (gc.ui.max_y-5) and line_offset > (len(buf)-(gc.ui.max_y-5)):
                 line_offset = len(buf)-(gc.ui.max_y-5)
-        time.sleep(0.1)
+        time.sleep(0.01)
     if terminateAfter:
         raise SystemExit
     gc.ui.toggleDisplay()
@@ -871,13 +875,14 @@ def draw_channel_log():
     chatWin = gc.ui.chatWin
     ft = None
     doBreak = False
-    for server_log in gc.server_log_tree:
-        if server_log.server is gc.client.current_server:
-            for channel_log in server_log.logs:
+    for guild_log in gc.guild_log_tree:
+        if guild_log.guild is gc.client.current_guild:
+            for channel_log in guild_log.logs:
                 if channel_log.channel is gc.client.current_channel:
-                    if channel_log.channel.type != ChannelType.text: continue
+                    if not isinstance(channel_log.channel, TextChannel):
+                        continue
 
-                    ft = gc.ui.views[channel_log.channel.id].formattedText
+                    ft = gc.ui.views[str(channel_log.channel.id)].formattedText
                     if len(ft.messages) > 0 and channel_log.logs[-1].id == \
                             ft.messages[-1].id:
                         doBreak = True
@@ -928,7 +933,7 @@ def draw_channel_log():
         chatWin.move(idx,name_offset)
         for idy, word in enumerate(line.words):
             color = 0
-            if "@" + gc.client.current_server.me.display_name in word.content:
+            if "@" + gc.client.current_guild.me.display_name in word.content:
                 color = gc.ui.colors[settings["mention_color"]]
             if not word.content:
                 continue

@@ -1,19 +1,19 @@
-from discord import Server, Channel
+from discord import Guild
 from client.channellog import ChannelLog
 
 # Simple wrapper class to hold a list of ChannelLogs
-class ServerLog():
-    def __init__(self, server, channel_log_list):
-        self._server = server
+class GuildLog():
+    def __init__(self, guild, channel_log_list):
+        self._guild = guild
         self._channel_logs = list(channel_log_list)
 
     @property
-    def server(self):
-        return self._server
+    def guild(self):
+        return self._guild
 
     @property
     def name(self):
-        return self._server.name
+        return self._guild.name
 
     @property
     def logs(self):

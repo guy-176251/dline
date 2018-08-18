@@ -18,11 +18,11 @@ class NoChannelsFoundException(Exception):
 # inherits from discord.py's Client
 class Client(discord.Client):
     def __init__(self, *args, **kwargs):
-        self._current_server = None
+        self._current_guild = None
         self._current_channel = None
         self._prompt = ""
         self._status = None
-        self._game = None
+        self._activity = None
         self.async_funcs = []
         self.locks = []
         super().__init__(*args, **kwargs)
@@ -35,13 +35,19 @@ class Client(discord.Client):
                 func = call[0]
                 self.locks.append(func.__name__)
                 args = []
+                opt_args = {}
                 if len(call) > 1:
-                    args = call[1:]
+                    for arg in call[1:]:
+                        if isinstance(arg, dict):
+                            opt_args = arg
+                        else:
+                            args.append(arg)
                 try:
-                    await func(*args)
-                    self.locks.remove(func.__name__)
+                    await func(*args, **opt_args)
                 except:
                     log("Could not await {}".format(func))
+                    log("\targs: {}\n\topt_args: {}".format(args, opt_args))
+                self.locks.remove(func.__name__)
             await asyncio.sleep(0.01)
 
     @property
@@ -52,26 +58,26 @@ class Client(discord.Client):
         self._prompt = prompt
 
     @property
-    def current_server(self):
-        # discord.Server object
-        return self._current_server
+    def current_guild(self):
+        # discord.Guild object
+        return self._current_guild
 
-    def set_current_server(self, server):
-        if isinstance(server, str):
-            for srv in self.servers:
-                if server.lower() in srv.name.lower():
-                    self._current_server = srv
+    def set_current_guild(self, guild):
+        if isinstance(guild, str):
+            for gld in self.guilds:
+                if guild.lower() in gld.name.lower():
+                    self._current_guild = gld
                     # find first non-ignored channel, set channel, mark flags as False
                     def_chan = None
                     lowest = 999
-                    for chan in srv.channels:
-                        if chan.type is discord.ChannelType.text and \
-                                chan.permissions_for(srv.me).read_messages and \
+                    for chan in gld.channels:
+                        if isinstance(chan, discord.TextChannel) and \
+                                chan.permissions_for(gld.me).read_messages and \
                                 chan.position < lowest:
                             try:
                                 # Skip over ignored channels
                                 for serv_key in settings["channel_ignore_list"]:
-                                    if serv_key["server_name"].lower() == srv.name:
+                                    if serv_key["guild_name"].lower() == gld.name:
                                         for name in serv_key["ignores"]:
                                             if chan.name.lower() == name.lower():
                                                 raise Found
@@ -90,7 +96,7 @@ class Client(discord.Client):
                             if def_chan is None:
                                 raise NoChannelsFoundException
                             self.current_channel = def_chan
-                            servlog = self.current_server_log
+                            servlog = self.current_guild_log
                             for chanlog in servlog.logs:
                                 if chanlog.channel is def_chan:
                                     chanlog.unread = False
@@ -105,7 +111,7 @@ class Client(discord.Client):
                             continue
                     return
             return
-        self._current_server = server
+        self._current_guild = guild
 
     @property
     def current_channel(self):
@@ -114,13 +120,13 @@ class Client(discord.Client):
     def current_channel(self, channel):
         if isinstance(channel, str):
             try:
-                svr = self.current_server
+                gld = self.current_guild
                 channel_found = None
                 channel_score = 0.0
-                for chl in svr.channels:
+                for chl in gld.channels:
                     if channel.lower() in chl.name.lower() and \
-                            chl.type == discord.ChannelType.text and \
-                            chl.permissions_for(svr.me).read_messages:
+                            isinstance(chl, discord.TextChannel) and \
+                            chl.permissions_for(gld.me).read_messages:
                         score = len(channel) / len(chl.name)
                         if score > channel_score:
                             channel_found = chl
@@ -137,8 +143,8 @@ class Client(discord.Client):
             except RuntimeError as e:
                 log("RuntimeError during channel setting: {}".format(e), logging.error)
                 return
-            except AttributeError:
-                log("Attribute error: chanlog is None", logging.error)
+            except AttributeError as e:
+                log("Attribute error, chanlog is None: {}".format(e), logging.error)
                 return
             except:
                 e = sys.exc_info()[0]
@@ -152,46 +158,46 @@ class Client(discord.Client):
             chanlog.mentioned_in = False
 
     @property
-    def current_server_log(self):
-        for slog in gc.server_log_tree:
-            if slog.server is self._current_server:
+    def current_guild_log(self):
+        for slog in gc.guild_log_tree:
+            if slog.guild is self._current_guild:
                 return slog
 
     @property
     def current_channel_log(self):
-        slog = self.current_server_log
+        slog = self.current_guild_log
         for idx, clog in enumerate(slog.logs):
-            if clog.channel.type is discord.ChannelType.text and \
+            if isinstance(clog.channel, discord.TextChannel) and \
                     clog.channel.name.lower() == self._current_channel.name.lower() and \
-                    clog.channel.permissions_for(slog.server.me).read_messages:
+                    clog.channel.permissions_for(slog.guild.me).read_messages:
                 return clog
 
     @property
     def online(self):
         online_count = 0
-        if not self.current_server == None:
-            for member in self.current_server.members:
-                if member is None: continue # happens if a member left the server
+        if not self.current_guild == None:
+            for member in self.current_guild.members:
+                if member is None: continue # happens if a member left the guild
                 if member.status is not discord.Status.offline:
                     online_count +=1
             return online_count
 
     @property
-    def game(self):
-        return self._game
+    def activity(self):
+        return self._activity
 
-    async def set_game(self, game):
-        self._game = discord.Game(name=game,type=0)
+    async def set_activity(self, activity):
+        self._activity = discord.Activity(name=activity,type=0)
         self._status = discord.Status.online
         # Note: the 'afk' kwarg handles how the client receives messages, (rates, etc)
         # This is meant to be a "nice" feature, but for us it causes more headache
         # than its worth.
-        if self._game is not None and self._game != "":
+        if self._activity is not None and self._activity != "":
             if self._status is not None and self._status != "":
-                try: await self.change_presence(game=self._game, status=self._status, afk=False)
+                try: await self.change_presence(activity=self._activity, status=self._status, afk=False)
                 except: pass
             else:
-                try: await self.change_presence(game=self._game, status=discord.Status.online, afk=False)
+                try: await self.change_presence(activity=self._activity, status=discord.Status.online, afk=False)
                 except: pass
 
     @property
@@ -207,9 +213,9 @@ class Client(discord.Client):
         elif status == "dnd":
             self._status = discord.Status.dnd
 
-        if self._game is not None and self._game != "":
+        if self._activity is not None and self._activity != "":
             try:
-                await self.change_presence(game=self._game, status=self._status, afk=False)
+                await self.change_presence(activity=self._activity, status=self._status, afk=False)
             except:
                 pass
         else:
@@ -219,7 +225,7 @@ class Client(discord.Client):
                 pass
 
     async def send_typing(self, channel):
-        if channel.permissions_for(self.current_server.me).send_messages:
+        if channel.permissions_for(self.current_guild.me).send_messages:
             await super().send_typing(channel)
 
     async def init_channel(self, channel=None):
@@ -230,22 +236,21 @@ class Client(discord.Client):
         else:
             log("Initializing channel {}".format(channel.name))
             try:
-                for svrlog in gc.server_log_tree:
-                    for chllog in svrlog.logs:
+                for gldlog in gc.guild_log_tree:
+                    for chllog in gldlog.logs:
                         if chllog.channel == channel:
                             clog = chllog
                             raise Found
             except Found:
                 pass
-        if clog.channel.type is discord.ChannelType.text and \
-                clog.channel.permissions_for(clog.server.me).read_messages:
+        if isinstance(clog.channel, discord.TextChannel) and \
+                clog.channel.permissions_for(clog.guild.me).read_messages:
             try: #TODO: Remove try/except once bug is fixed
-                async for msg in self.logs_from(clog.channel,
-                        limit=settings["max_log_entries"]):
-                    if msg.edited_timestamp is not None:
+                async for msg in clog.channel.history(limit=settings["max_log_entries"]):
+                    if msg.edited_at is not None:
                         msg.content += " **(edited)**"
                     # needed for modification of past messages
-                    self.messages.append(msg)
+                    #self.messages.append(msg)
                     clog.insert(0, calc_mutations(msg))
             except discord.Forbidden:
                 log("Cannot enter channel {}: Forbidden.".format(clog.channel.name))
@@ -254,4 +259,4 @@ class Client(discord.Client):
             gc.channels_entered.append(clog.channel)
             init_view(gc, clog.channel) # initialize view
             for msg in clog.logs:
-                gc.ui.views[clog.channel.id].formattedText.addMessage(msg)
+                gc.ui.views[str(clog.channel.id)].formattedText.addMessage(msg)

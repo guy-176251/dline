@@ -9,4 +9,4 @@ class View:
         self.formattedText = FormattedText()
 
 def init_view(gc, channel):
-    gc.ui.views[channel.id] = View(channel.name)
+    gc.ui.views[str(channel.id)] = View(channel.name)
