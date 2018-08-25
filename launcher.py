@@ -2,7 +2,7 @@
 import sys
 
 # check if using python 3.5+
-if sys.version_info >= (3, 5) and sys.version_info < (3, 7):
+if sys.version_info >= (3, 5):
     import Discline
     Discline.main()
 else:
