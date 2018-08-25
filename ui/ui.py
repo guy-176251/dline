@@ -3,7 +3,7 @@ import asyncio
 import time
 import curses, curses.panel
 import threading
-from discord import TextChannel
+from discord import TextChannel, VoiceChannel, CategoryChannel
 from blessings import Terminal
 from input.messageEdit import MessageEdit
 from utils.log import log
@@ -318,13 +318,11 @@ def draw_top_win():
     guildName = gc.client.current_guild.name
 
     topic = ""
-    try:
-        if gc.client.current_channel.topic is not None:
-            topic = gc.client.current_channel.topic
-        # if there is no channel topic, just print the channel name
-        else:
-            topic = gc.client.current_channel.name
-    except: pass
+    if gc.client.current_channel.topic is not None:
+        topic = gc.client.current_channel.topic
+    # if there is no channel topic, just print the channel name
+    else:
+        topic = gc.client.current_channel.name
     topic = topic.replace("\n", " ")
     if len(topic) >= width//2:
         topic = topic[:width//2-3] + "..."
@@ -332,19 +330,22 @@ def draw_top_win():
 
     # sleep required to get accurate user count
     time.sleep(0.05)
-    online = str(gc.client.online)
-    online_text = "Users online: " + online
-    onlineOffset = width-len(online_text)-1
+    try:
+        online = str(gc.client.online)
+        online_text = "Users online: " + online
+        onlineOffset = width-len(online_text)-1
 
-    topWin.erase()
+        topWin.erase()
 
-    topWin.addstr(0,0, "Guild: ")
-    topWin.addstr(guildName, color)
+        topWin.addstr(0,0, "Guild: ")
+        topWin.addstr(guildName, color)
 
-    topWin.addstr(0,topicOffset, topic)
+        topWin.addstr(0,topicOffset, topic)
 
-    topWin.addstr(0,onlineOffset, "Users online: ", color)
-    topWin.addstr(online)
+        topWin.addstr(0,onlineOffset, "Users online: ", color)
+        topWin.addstr(online)
+    except Exception as e:
+        log("e: {}".format(e))
 
     topWin.noutrefresh()
 
@@ -396,7 +397,8 @@ def draw_left_win():
 
         # don't print categories or voice chats
         # TODO: this will break on private messages
-        if not isinstance(clog.channel, TextChannel):
+        if isinstance(clog.channel, VoiceChannel) or \
+                isinstance(clog.channel, CategoryChannel):
             continue
         text = clog.name
         length = len(text)
@@ -446,7 +448,7 @@ def draw_user_win():
 
     userWin.erase()
 
-    for idx,member in enumerate(gc.client.current_guild.members):
+    for idx,member in enumerate(gc.client.current_channel.members):
         if idx+2 > height:
             userWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
             break
@@ -599,7 +601,8 @@ def draw_channellist():
 
     buf = []
     for channel in channels:
-        if isinstance(channel, TextChannel) and \
+        if (not isinstance(channel, VoiceChannel) and \
+                not isinstance(channel, CategoryChannel)) and \
                 channel.permissions_for(channel.guild.me).read_messages:
             buf.append((channel.name, 0))
 
@@ -879,10 +882,14 @@ def draw_channel_log():
         if guild_log.guild is gc.client.current_guild:
             for channel_log in guild_log.logs:
                 if channel_log.channel is gc.client.current_channel:
-                    if not isinstance(channel_log.channel, TextChannel):
+                    if isinstance(channel_log.channel, VoiceChannel) or \
+                            isinstance(channel_log.channel, CategoryChannel):
                         continue
 
-                    ft = gc.ui.views[str(channel_log.channel.id)].formattedText
+                    try:
+                        ft = gc.ui.views[str(channel_log.channel.id)].formattedText
+                    except Exception as e:
+                        log("e: {}".format(e))
                     if len(ft.messages) > 0 and channel_log.logs[-1].id == \
                             ft.messages[-1].id:
                         doBreak = True

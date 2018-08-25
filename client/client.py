@@ -2,6 +2,7 @@ import sys
 import asyncio
 import logging
 import discord
+from client.channellog import PrivateChannel
 from utils.log import log
 from utils.globals import gc, kill
 from utils.settings import settings
@@ -44,9 +45,10 @@ class Client(discord.Client):
                             args.append(arg)
                 try:
                     await func(*args, **opt_args)
-                except:
+                except Exception as e:
                     log("Could not await {}".format(func))
                     log("\targs: {}\n\topt_args: {}".format(args, opt_args))
+                    log("\terror: {}".format(e))
                 self.locks.remove(func.__name__)
             await asyncio.sleep(0.01)
 
@@ -64,7 +66,8 @@ class Client(discord.Client):
 
     def set_current_guild(self, guild):
         if isinstance(guild, str):
-            for gld in self.guilds:
+            for gldlog in gc.guild_log_tree:
+                gld = gldlog.guild
                 if guild.lower() in gld.name.lower():
                     self._current_guild = gld
                     # find first non-ignored channel, set channel, mark flags as False
@@ -90,20 +93,24 @@ class Client(discord.Client):
                                 return
                             lowest = chan.position
                             def_chan = chan
+                        elif isinstance(chan, PrivateChannel):
+                            def_chan = chan
                         else:
                             continue
                         try:
                             if def_chan is None:
                                 raise NoChannelsFoundException
                             self.current_channel = def_chan
-                            servlog = self.current_guild_log
-                            for chanlog in servlog.logs:
+                            for chanlog in gldlog.logs:
                                 if chanlog.channel is def_chan:
                                     chanlog.unread = False
                                     chanlog.mentioned_in = False
                                     return
                         except NoChannelsFoundException:
                             log("No channels found.")
+                            return
+                        except AttributeError as e:
+                            log("Attribute error: {}".format(e))
                             return
                         except:
                             e = sys.exc_info()[0]
@@ -131,6 +138,10 @@ class Client(discord.Client):
                         if score > channel_score:
                             channel_found = chl
                             channel_score = score
+                    elif isinstance(chl, PrivateChannel) and \
+                            channel.lower() in chl.name.lower():
+                        channel_found = chl
+                        break
                 if channel_found != None:
                     self._current_channel = channel_found
                     self._prompt = channel_found.name
@@ -167,20 +178,32 @@ class Client(discord.Client):
     def current_channel_log(self):
         slog = self.current_guild_log
         for idx, clog in enumerate(slog.logs):
-            if isinstance(clog.channel, discord.TextChannel) and \
-                    clog.channel.name.lower() == self._current_channel.name.lower() and \
-                    clog.channel.permissions_for(slog.guild.me).read_messages:
-                return clog
+            if clog.channel.name.lower() == self._current_channel.name.lower():
+                if isinstance(clog.channel, PrivateChannel) or \
+                        (isinstance(clog.channel, discord.TextChannel) and \
+                        clog.channel.permissions_for(slog.guild.me).read_messages):
+                    return clog
 
     @property
     def online(self):
         online_count = 0
-        if not self.current_guild == None:
-            for member in self.current_guild.members:
-                if member is None: continue # happens if a member left the guild
-                if member.status is not discord.Status.offline:
-                    online_count +=1
-            return online_count
+        if self.current_guild is not None:
+            if isinstance(self.current_guild, discord.Guild):
+                for member in self.current_guild.members:
+                    if member is None: continue # happens if a member left the guild
+                    if isinstance(member, discord.Member):
+                        if member.status is not discord.Status.offline:
+                            online_count +=1
+                return online_count
+            else:
+                for user in self.current_guild.members:
+                    for guild in self.guilds:
+                        member = guild.get_member(user.id)
+                        if member is not None:
+                            if member.status != discord.Status.offline:
+                                online_count += 1
+                            break
+                return online_count
 
     @property
     def activity(self):
@@ -243,7 +266,8 @@ class Client(discord.Client):
                             raise Found
             except Found:
                 pass
-        if isinstance(clog.channel, discord.TextChannel) and \
+        if isinstance(clog.channel, PrivateChannel) or \
+                isinstance(clog.channel, discord.TextChannel) and \
                 clog.channel.permissions_for(clog.guild.me).read_messages:
             try: #TODO: Remove try/except once bug is fixed
                 async for msg in clog.channel.history(limit=settings["max_log_entries"]):
@@ -256,6 +280,8 @@ class Client(discord.Client):
                 log("Cannot enter channel {}: Forbidden.".format(clog.channel.name))
                 init_view(gc, clog.channel)
                 return
+            except Exception as e:
+                log("error: {}".format(e))
             gc.channels_entered.append(clog.channel)
             init_view(gc, clog.channel) # initialize view
             for msg in clog.logs:

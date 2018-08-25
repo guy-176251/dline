@@ -63,14 +63,16 @@ def calc_mutations(msg):
     # check to see if it has any custom-emojis
     # These will look like <:emojiname:39432432903201>
     # We will recursively trim this into just :emojiname:
-    if msg.guild.emojis is not None and len(msg.guild.emojis) > 0:
-        for emoji in msg.guild.emojis:
-            full_name = "<:" + emoji.name + ":" + str(emoji.id) + ">"
+    try:
+        if msg.guild.emojis is not None and len(msg.guild.emojis) > 0:
+            for emoji in msg.guild.emojis:
+                full_name = "<:" + emoji.name + ":" + str(emoji.id) + ">"
 
-            while full_name in text:
-                text = trim_emoji(full_name, emoji.name, text)
+                while full_name in text:
+                    text = trim_emoji(full_name, emoji.name, text)
 
-        msg.content = text
+            msg.content = text
+    except: pass
 
     # Catch all of the non-guild (nitro) emojis
     mat = re.match('<.*:\w*:\d*>', text)

@@ -1,6 +1,22 @@
 from discord import Guild
 from client.channellog import ChannelLog
 
+class PrivateGuild:
+    def __init__(self):
+        self.name = "Private Messages"
+        self.roles = None
+        self.emojis = None
+        self.channels = None
+        self.members = []
+
+    def set_channels(self, channels):
+        self.channels = channels
+        for channel in channels:
+            for member in channel.members:
+                if member not in self.members:
+                    self.members.append(member)
+        self.me = channels[0].me
+
 # Simple wrapper class to hold a list of ChannelLogs
 class GuildLog():
     def __init__(self, guild, channel_log_list):

@@ -1,4 +1,4 @@
-#!/usr/bin/python3.6
+#!/usr/bin/env python3.6
 # ------------------------------------------------------- #
 #                                                         #
 # Discline-curses                                         #
@@ -23,8 +23,8 @@ from utils.updates import check_for_updates
 from utils.threads import WorkerThread
 from utils.token_utils import get_token, store_token
 from utils.log import log, startLogging, msglog
-from client.guildlog import GuildLog
-from client.channellog import ChannelLog
+from client.guildlog import PrivateGuild, GuildLog
+from client.channellog import PrivateChannel, ChannelLog
 from client.on_message import on_incoming_message
 from client.client import Client
 
@@ -45,6 +45,16 @@ async def on_ready():
 
     if settings["default_activity"] is not None:
         await gc.client.set_activity(settings["default_activity"])
+
+    privateGuild = PrivateGuild()
+    channels = []
+    channel_logs = []
+    for idx,channel in enumerate(gc.client.private_channels):
+        chl = PrivateChannel(channel, privateGuild, idx)
+        channels.append(chl)
+        channel_logs.append(ChannelLog(chl, []))
+    privateGuild.set_channels(channels)
+    gc.guild_log_tree.append(GuildLog(privateGuild, channel_logs))
 
     for guild in gc.client.guilds:
         # Null check to check guild availability

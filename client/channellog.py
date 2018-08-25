@@ -1,4 +1,45 @@
-from discord import TextChannel, DMChannel
+from discord import TextChannel, GroupChannel, DMChannel, abc, iterators
+from utils.log import log
+
+class PrivateChannel(abc.Messageable):
+    def __init__(self, channel, guild, position):
+        self._channel = channel
+        self.name = ""
+        self.topic = ""
+        self.members = None
+        if isinstance(channel, DMChannel):
+            self.name = channel.recipient.name
+            self.members = (channel.me, channel.recipient)
+        elif isinstance(channel, GroupChannel):
+            self.members = []
+            for user in channel.recipients:
+                self.members.append(user)
+            self.name = "Group " + str(position)
+            if channel.name is not None:
+                self.name = channel.name
+        self.topic = self.name
+        self.id = position
+        self.me = channel.me
+        self.guild = guild
+        self.position = position
+
+    def history(self, *args, **kwargs):
+        return iterators.HistoryIterator(self._channel, limit=100)
+
+    def permissions_for(self, *args, **kwargs):
+        self._channel.permissions_for(*args, **kwargs)
+
+    async def send(self, *args, **kwargs):
+        await self._channel.send(*args, **kwargs)
+
+    async def trigger_typing(self):
+        await self._channel.trigger_typing()
+
+    async def _get_channel(self):
+        return self
+
+    def __aiter__(self):
+        return self
 
 # Wrapper class to make dealing with logs easier
 class ChannelLog():
@@ -22,15 +63,9 @@ class ChannelLog():
 
     @property
     def name(self):
-        if isinstance(self._channel, TextChannel):
+        if isinstance(self._channel, TextChannel) or \
+                isinstance(self._channel, PrivateChannel):
             return self._channel.name
-        elif isinstance(self._channel, DMChannel):
-            name = self._channel.name
-            if name is None:
-                name = self_channel.recipients[0].name
-            return name
-        else:
-            return "Name unavailable"
 
     @property
     def index(self):

@@ -131,7 +131,6 @@ def input_handler(text):
                             mentions.append(mention)
                             break
             text = text.format(*mentions)
-        sent = False
         for i in range(0,3):
             try:
                 call = (gc.client.current_channel.send, text)
@@ -139,7 +138,6 @@ def input_handler(text):
                 while call in gc.client.async_funcs and \
                         call[0].__name__ in gc.client.locks:
                     time.sleep(0.1)
-                sent = True
                 break
             except:
                 time.sleep(3)
@@ -147,7 +145,10 @@ def input_handler(text):
 def parseCommand(command, arg=None):
     if command in ('guild', 'server', 's'):
         prev_guild = gc.client.current_guild
-        gc.client.set_current_guild(arg)
+        try:
+            gc.client.set_current_guild(arg)
+        except Exception as e:
+            log("e: {}".format(e))
         if gc.client.current_guild is prev_guild:
             return
         log("changed guild")
