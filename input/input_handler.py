@@ -29,7 +29,9 @@ def key_input():
         if ch == -1 or not gc.ui.displayPanel.hidden():
             time.sleep(0.01)
             continue
-        if chr(ch) != '\n':
+
+        if chr(ch) != '\n' and len(gc.ui.messageEdit.inputBuffer) > 0 and \
+                gc.ui.messageEdit.inputBuffer[0] != ord('/'):
             gc.typingBeingHandled = True
         # prevents crashes when enter is hit and input buf is empty
         if chr(ch) == '\n' and not gc.ui.messageEdit.inputBuffer:
@@ -143,12 +145,30 @@ def input_handler(text):
                 time.sleep(3)
 
 def parseCommand(command, arg=None):
-    if command in ('guild', 'server', 's'):
+    if arg is None:
+        if command in ("refresh", "update"):
+            ui.draw_screen()
+            log("Manual update done", logging.info)
+        elif command in ("quit", "exit"):
+            try: gc.exit_thread.start()
+            except SystemExit: pass
+        elif command in ("help", 'h'): ui.draw_help()
+        elif command in ("guilds", "glds", "servers", "servs"): ui.draw_guildlist()
+        elif command in ("channels", "chans"): ui.draw_channellist()
+        elif command == "emojis": ui.draw_emojilist()
+        elif command in ("users", "members"): ui.draw_userlist()
+        elif command[0] == 'c':
+            try:
+                if command[1].isdigit():
+                    channel_jump(command)
+                    ui.draw_screen()
+            except IndexError:
+                pass
+        return
+
+    if command in ('guild', 'gld', 'server', 's'):
         prev_guild = gc.client.current_guild
-        try:
-            gc.client.set_current_guild(arg)
-        except Exception as e:
-            log("e: {}".format(e))
+        gc.client.set_current_guild(arg)
         if gc.client.current_guild is prev_guild:
             return
         log("changed guild")
@@ -185,33 +205,6 @@ def parseCommand(command, arg=None):
 
         if status in ("online", "offline", "idle", "dnd"):
             call = (gc.client.set_status, status)
-            gc.client.async_funcs.append(call)
-            while call in gc.client.async_funcs or \
-                    call[0].__name__ in gc.client.locks:
-                time.sleep(0.1)
-
-    if arg is None:
-        if command in ("refresh", "update"):
-            ui.draw_screen()
-            log("Manual update done", logging.info)
-        elif command in ("quit", "exit"):
-            try: gc.exit_thread.start()
-            except SystemExit: pass
-        elif command in ("help", 'h'): ui.draw_help()
-        elif command in ("guilds", "servers", "servs"): ui.draw_guildlist()
-        elif command in ("channels", "chans"): ui.draw_channellist()
-        elif command == "emojis": ui.draw_emojilist()
-        elif command in ("users", "members"): ui.draw_userlist()
-        elif command[0] == 'c':
-            try:
-                if command[1].isdigit():
-                    channel_jump(command)
-                    ui.draw_screen()
-            except IndexError:
-                pass
-        else:
-            call = (gc.client.current_channel.send, \
-                    check_emoticons(gc.client, command))
             gc.client.async_funcs.append(call)
             while call in gc.client.async_funcs or \
                     call[0].__name__ in gc.client.locks:

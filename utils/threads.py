@@ -14,7 +14,10 @@ class WorkerThread(threading.Thread):
 
     def run(self):
         log("Starting {} thread".format(self.func.__name__))
-        self.func()
+        try:
+            self.func()
+        except Exception as e:
+            log("Error in {}: {}".format(self.func.__name__, e))
 
 class UiThread(threading.Thread):
     def __init__(self, gc):
