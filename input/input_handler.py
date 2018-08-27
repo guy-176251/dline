@@ -211,8 +211,8 @@ def parseCommand(command, arg=None):
                 time.sleep(0.1)
 
 def parseEmoji(text):
-    if settings["has_nitro"]:
-        for emoji in gc.client.get_all_emojis():
+    if gc.client.user.premium:
+        for emoji in gc.client.emojis:
             short_name = ':' + emoji.name + ':'
             if short_name in text:
                 full_name = "<:{}:{}>".format(emoji.name, emoji.id)
