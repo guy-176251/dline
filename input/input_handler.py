@@ -48,6 +48,10 @@ def key_input():
             gc.ui.resize()
             ui.draw_screen()
             continue
+        elif ch == curses.KEY_DC:
+            # TODO: Add functionality here
+            ui.draw_screen()
+            continue
         # if ESC is pressed, clear messageEdit buffer
         elif ch == 27:
             ch = editWin.getch()

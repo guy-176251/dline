@@ -6,6 +6,6 @@ if sys.version_info >= (3, 5):
     import Discline
     Discline.main()
 else:
-    print("Sorry, but this requires python 3.5 or python 3.6")
+    print("Sorry, but this requires python 3.5+")
     quit()
 
