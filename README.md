@@ -1,5 +1,4 @@
 # ![logo_small.png](res/logo/logo_small.png) Discline-curses
-![status-mostly%20working-green.svg](https://img.shields.io/badge/status-mostly%20working-green.svg)
 ------------------------------
 
 ![screenshot_main.png](res/screenshots/screenshot_main.png)
@@ -13,7 +12,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
 1. Install the dependencies:
 
-    `sudo pip3 install asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe==0.6.2`
+    `pip3 install --user asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe==0.6.2`
 
 2. Clone the repo
 
@@ -27,7 +26,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
     * Go into "network" and hit F5. Type "v6" in the filter field
 
-    * Find the "access-token" entry and scroll down to authorization. This is your token.
+    * Filter by XHR and look through entries until you find "authorization" under "request headers". This is your token.
 
     If all else fails, join the dev discord and we'll be glad to help!
 
@@ -52,7 +51,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 * /nick to change nickname (per guild)
 * typing without a leading prefix will submit to current chat
 * "<USER> is typing..." support
-* private channels
+* private messaging
 * colored output, with user definable colors and custom roles
 * Channel logs update when users edit messages
 * /channels, /guilds, /users to view information
@@ -77,7 +76,6 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
 * emoji reactions
 * comment editing and deletion
-* private messaging
 * message searching
 
 ## Dependencies
@@ -97,7 +95,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 2. Install `pip3`, normally called `python3-pip` in package managers
 3. Download the dependencies using pip with the following command:
 
-    `sudo pip3 install asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe`
+    `pip3 install --user asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe`
 
 
 ### Color Customization

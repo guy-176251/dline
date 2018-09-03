@@ -13,7 +13,8 @@ async def process_message(msg, channel_log):
     else:
         channel_log.append(calc_mutations(msg))
         gc.ui.channel_log_offset += 1
-    if channel_log.channel is not gc.client.current_channel:
+    if msg.guild is not None and \
+            channel_log.channel is not gc.client.current_channel:
         if msg.guild.me.mention in msg.content:
             channel_log.mentioned_in = True
         else:

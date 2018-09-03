@@ -1,5 +1,4 @@
-#!/usr/bin/env python3.7
-# ------------------------------------------------------- #
+
 #                                                         #
 # Discline-curses                                         #
 #                                                         #
@@ -13,6 +12,7 @@ import sys
 import asyncio
 import curses
 import os
+import subprocess
 import threading
 from discord import TextChannel, MessageType
 from input.input_handler import key_input, typing_handler
@@ -211,6 +211,11 @@ def main():
         elif sys.argv[1] == "--config":
             # -- now handled in utils.settings.py --- #
             pass
+        elif sys.argv[1] in ("-v", '--version'):
+            commit_id = subprocess.run(("git", "log"), stdout=subprocess.PIPE) \
+                    .stdout.decode("utf-8").split('\n')[0].replace("commit ","")
+            print("Discline-curses at commit {}".format(commit_id[:8]))
+            quit()
         else:
             print(gc.term.red("Error: Unknown command."))
             print(gc.term.yellow("See --help for options."))
