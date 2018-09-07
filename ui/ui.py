@@ -1,16 +1,12 @@
 import sys
-import asyncio
 import time
 import curses, curses.panel
-import threading
-from discord import TextChannel, VoiceChannel, CategoryChannel
-from blessings import Terminal
+from discord import VoiceChannel, CategoryChannel
 from input.messageEdit import MessageEdit
 from utils.log import log
 from ui.ui_utils import get_role_color
 from ui.userlist import UserList
 from utils.quicksort import quick_sort_channels, quick_sort_channel_logs
-from utils.settings import settings
 
 hasItalic = False
 if sys.version_info >= (3,7):
@@ -66,11 +62,11 @@ class CursesUi:
         self.makeFrameWin()
         self.makeDisplay()
         try:
-            self.leftWinWidth = int(self.max_x // settings["left_win_divider"])
-            self.userWinWidth = int(self.max_x // settings["user_win_divider"])
+            self.leftWinWidth = int(self.max_x // gc.settings["left_win_divider"])
+            self.userWinWidth = int(self.max_x // gc.settings["user_win_divider"])
         except:
-            self.leftWinWidth = int(self.max_x // settings["left_bar_divider"])
-            self.userWinWidth = int(self.max_x // settings["user_bar_divider"])
+            self.leftWinWidth = int(self.max_x // gc.settings["left_bar_divider"])
+            self.userWinWidth = int(self.max_x // gc.settings["user_bar_divider"])
         if self.leftWinWidth < 10:
             self.leftWinWidth = 10
         if self.userWinWidth < 10:
@@ -102,15 +98,15 @@ class CursesUi:
             curses.init_pair(i, i-1, -1)
         for key,value in colorNames.items():
             self.colors[key] = curses.color_pair(value)
-        self.separatorsVisible = settings["show_separators"]
+        self.separatorsVisible = gc.settings["show_separators"]
         try:
-            self.topWinVisible = settings["show_top_win"]
-            self.leftWinVisible = settings["show_left_win"]
+            self.topWinVisible = gc.settings["show_top_win"]
+            self.leftWinVisible = gc.settings["show_left_win"]
         except:
-            self.topWinVisible = settings["show_top_bar"]
-            self.leftWinVisible = settings["show_left_bar"]
+            self.topWinVisible = gc.settings["show_top_bar"]
+            self.leftWinVisible = gc.settings["show_left_bar"]
         try:
-            self.userWinVisible = settings["show_user_win"]
+            self.userWinVisible = gc.settings["show_user_win"]
         except:
             pass
 
@@ -313,7 +309,7 @@ def draw_screen():
 def draw_top_win():
     topWin = gc.ui.topWin
     width = topWin.getmaxyx()[1]
-    color = gc.ui.colors[settings["guild_display_color"]]
+    color = gc.ui.colors[gc.settings["guild_display_color"]]
 
     guildName = gc.client.current_guild.name
 
@@ -370,9 +366,7 @@ def draw_left_win():
 
     if gc.ui.separatorsVisible:
         length = 0
-        length = gc.term.height - settings["margin"]
-
-        sep_color = gc.ui.colors[settings["separator_color"]]
+        length = gc.term.height - gc.settings["margin"]
 
     # Create a new list so we can preserve the guild's channel order
     channel_logs = []
@@ -404,36 +398,36 @@ def draw_left_win():
         length = len(text)
 
         offset = 0
-        if settings["number_channels"]:
+        if gc.settings["number_channels"]:
             offset = 3
             if idx >= 9:
                 offset = 4
 
         if length > left_win_width-offset:
-            if settings["truncate_channels"]:
+            if gc.settings["truncate_channels"]:
                 text = text[0:left_win_width - offset]
             else:
                 text = text[0:left_win_width - 3 - offset] + "..."
 
         leftWin.move(idx,0)
-        if settings["number_channels"]:
+        if gc.settings["number_channels"]:
             leftWin.addstr(str(idx+1) + ". ")
         if clog.channel is gc.client.current_channel:
-            leftWin.addstr(text, gc.ui.colors[settings["current_channel_color"]])
+            leftWin.addstr(text, gc.ui.colors[gc.settings["current_channel_color"]])
         else:
             if clog.channel is not channel_logs[0]:
                 pass
 
-            if clog.unread and settings["blink_unreads"]:
-                color = settings["unread_channel_color"]
+            if clog.unread and gc.settings["blink_unreads"]:
+                color = gc.settings["unread_channel_color"]
                 if "blink_" in color:
                     split = color.split("blink_")[1]
                     color = gc.ui.colors[split]|curses.A_BLINK
                 elif "on_" in color:
                     color = gc.ui.colors[color.split("on_")[1]]
                 leftWin.addstr(text, color)
-            elif clog.mentioned_in and settings["blink_mentions"]:
-                color = settings["unread_mention_color"]
+            elif clog.mentioned_in and gc.settings["blink_mentions"]:
+                color = gc.settings["unread_mention_color"]
                 if "blink_" in color:
                     color = gc.ui.colors[color.split("blink_")[1]]
                 leftWin.addstr(text, color)
@@ -467,20 +461,20 @@ def draw_edit_win(update=False):
     width = gc.ui.max_x-offset
     edit = gc.ui.messageEdit
 
-    borderColor = gc.ui.colors[settings["prompt_border_color"]]
+    borderColor = gc.ui.colors[gc.settings["prompt_border_color"]]
     hasHash = False
     hashColor = 0
     promptColor = 0
-    if gc.client.prompt != settings["default_prompt"]:
+    if gc.client.prompt != gc.settings["default_prompt"]:
         hasHash = True
-        hashColor = gc.ui.colors[settings["prompt_hash_color"]]
-    promptColor = gc.ui.colors[settings["prompt_color"]]
+        hashColor = gc.ui.colors[gc.settings["prompt_hash_color"]]
+    promptColor = gc.ui.colors[gc.settings["prompt_color"]]
 
     edit.setPrompt(gc.client.prompt)
     editWin.erase()
     editWin.addstr(0,0, "[", borderColor)
     if not hasHash:
-        editWin.addstr(settings["default_prompt"], promptColor)
+        editWin.addstr(gc.settings["default_prompt"], promptColor)
     else:
         editWin.addstr("#", hashColor)
         editWin.addstr(promptText, promptColor)
@@ -517,32 +511,32 @@ def draw_guildlist():
         name = slog.name
 
         if slog.guild is gc.client.current_guild:
-            buf.append((name, gc.ui.colors[settings["current_channel_color"]]))
+            buf.append((name, gc.ui.colors[gc.settings["current_channel_color"]]))
             continue
 
         string = ""
         for clog in slog.logs:
             if clog.mentioned_in:
                 attrs = curses.A_NORMAL
-                color = settings["unread_mention_color"]
-                if 'blink' in settings["unread_mention_color"]:
-                    if settings["blink_mentions"]:
+                color = gc.settings["unread_mention_color"]
+                if 'blink' in gc.settings["unread_mention_color"]:
+                    if gc.settings["blink_mentions"]:
                         attrs = curses.A_BLINK
                     color = color.split('blink_')[1]
                 string = (name, gc.ui.colors[color]|attrs)
                 break
             elif clog.unread:
                 attrs = curses.A_NORMAL
-                color = settings["unread_channel_color"]
-                if 'blink' in settings["unread_channel_color"]:
-                    if settings["blink_unreads"]:
+                color = gc.settings["unread_channel_color"]
+                if 'blink' in gc.settings["unread_channel_color"]:
+                    if gc.settings["blink_unreads"]:
                         attrs = curses.A_BLINK
                     color = color.split('blink_')[1]
                 string = (name, gc.ui.colors[color]|attrs)
                 break
 
         if string == "":
-            string = (name, gc.ui.colors[settings["text_color"]])
+            string = (name, gc.ui.colors[gc.settings["text_color"]])
 
         buf.append(string)
     line_offset = 0
@@ -648,8 +642,6 @@ def draw_emojilist():
         gc.ui.toggleDisplay()
         draw_screen()
         return
-
-    guild_name = gc.client.current_guild.name
 
     emojis = []
     guild_emojis = None
@@ -797,15 +789,17 @@ def draw_help(terminateAfter=False):
             ('---', gc.ui.colors["cyan"]), ("stores your token", 0)],
         [("This file can be found at ~/.config/Discline/token", gc.ui.colors["cyan"])],
         [],
-        [("--config", gc.ui.colors["yellow"]),
+        [("--config-path", gc.ui.colors["yellow"]),
             ('---', gc.ui.colors["cyan"]), ("specify a specific config path", 0)],
+        [("--token-path", gc.ui.colors["yellow"]),
+            ('---', gc.ui.colors["cyan"]), ("specify a specific token path", 0)],
         [],
         [("Available Commands", gc.ui.colors["green"])],
         [("-----", gc.ui.colors["red"])],
         [("/channel", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("switch to channel - (alias: c)", 0)],
         [("/guild", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("switch guild - (alias: s)", 0)],
+            ('-', gc.ui.colors["cyan"]), ("switch guild - (alias: gld)", 0)],
         [("Note: These commands can now fuzzy-find!", gc.ui.colors["cyan"])],
         [],
         [("/guilds", gc.ui.colors["yellow"]),
@@ -928,7 +922,7 @@ def draw_channel_log():
     for idx, line in enumerate(
             lines[gc.ui.channel_log_offset:gc.ui.channel_log_offset+chatWin_height]):
         if line.isFirst:
-            author_color = get_role_color(line.topRole, gc.ui.colors)
+            author_color = get_role_color(line.topRole, gc)
             chatWin.addstr(idx,0, line.user + ": ", author_color)
             name_offset = chatWin.getyx()[1]
         elif name_offset == 0:
@@ -941,7 +935,7 @@ def draw_channel_log():
         for idy, word in enumerate(line.words):
             color = 0
             if "@" + gc.client.current_guild.me.display_name in word.content:
-                color = gc.ui.colors[settings["mention_color"]]
+                color = gc.ui.colors[gc.settings["mention_color"]]
             if not word.content:
                 continue
             try:

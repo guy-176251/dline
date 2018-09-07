@@ -1,8 +1,6 @@
 import curses
 from collections import deque
 import unicodedata
-from utils.log import log
-from utils.settings import settings
 from utils.globals import gc
 from ui.textParser import parseText
 
@@ -43,7 +41,7 @@ class Line:
 class FormattedText:
     def __init__(self):
         self.messages = []
-        self.messageBuffer = deque([], settings["max_messages"])
+        self.messageBuffer = deque([], gc.settings["max_messages"])
 
     def addMessage(self, msg):
         self.messages.append(msg)
@@ -62,7 +60,6 @@ class FormattedText:
             self.format(msg)
 
     def format(self, msg):
-        chrPos = 0
         try:
             name = msg.author.display_name
         except:

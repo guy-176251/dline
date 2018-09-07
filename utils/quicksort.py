@@ -1,4 +1,3 @@
-from utils.log import log
 
 def quick_sort_channels(channels):
     # sort channels to match the guild's default chosen positions

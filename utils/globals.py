@@ -1,21 +1,18 @@
 import time
 import sys
-import asyncio
-import threading
 from blessings import Terminal
-from utils.settings import settings
-from utils.log import log
-from utils.threads import UiThread
 
-NO_SETTINGS=False
-try:
-    if sys.argv[1] == "--store-token" or sys.argv[1] == "--token":
-        NO_SETTINGS=True
-except IndexError:
+class Found(Exception):
+    pass
+class NoChannelsFoundException(Exception):
+    pass
+class OutdatedConfigException(Exception):
     pass
 
 class GlobalsContainer:
     def __init__(self):
+        from utils.threads import UiThread
+        self.settings = {}
         self.term = Terminal()
         self.client = None
         self.ui_thread = UiThread(self)
@@ -31,10 +28,10 @@ class GlobalsContainer:
 
     def initClient(self):
         from client.client import Client
-        if NO_SETTINGS:
+        try:
+            messages=self.settings["max_messages"]
+        except:
             messages=100
-        else:
-            messages=settings["max_messages"]
         self.client = Client(max_messages=messages)
 
 gc = GlobalsContainer()

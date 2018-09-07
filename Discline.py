@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python3.7
+# ------------------------------------------------------- #
 #                                                         #
 # Discline-curses                                         #
 #                                                         #
@@ -8,17 +9,15 @@
 #                                                         #
 # ------------------------------------------------------- #
 
-import sys
 import asyncio
 import curses
-import os
 import subprocess
-import threading
-from discord import TextChannel, MessageType
+import argparse
+from discord import TextChannel
 from input.input_handler import key_input, typing_handler
 from ui.ui import draw_screen, draw_help
-from utils.globals import *
-from utils.settings import copy_skeleton, settings
+from utils.globals import gc, kill, Found
+from utils.settings import copy_skeleton, load_config
 from utils.updates import check_for_updates
 from utils.threads import WorkerThread
 from utils.token_utils import get_token, store_token
@@ -26,7 +25,6 @@ from utils.log import log, startLogging, msglog
 from client.guildlog import PrivateGuild, GuildLog
 from client.channellog import PrivateChannel, ChannelLog
 from client.on_message import on_incoming_message
-from client.client import Client
 
 init_complete = False
 
@@ -38,13 +36,13 @@ gc.initClient()
 @gc.client.event
 async def on_ready():
     # these values are set in settings.yaml
-    if settings["default_prompt"] is not None:
-        gc.client.prompt = settings["default_prompt"].lower()
+    if gc.settings["default_prompt"] is not None:
+        gc.client.prompt = gc.settings["default_prompt"].lower()
     else:
         gc.client.prompt = '~'
 
-    if settings["default_activity"] is not None:
-        await gc.client.set_activity(settings["default_activity"])
+    if gc.settings["default_activity"] is not None:
+        await gc.client.set_activity(gc.settings["default_activity"])
 
     privateGuild = PrivateGuild()
     channels = []
@@ -72,7 +70,7 @@ async def on_ready():
             if isinstance(channel, TextChannel):
                     if channel.permissions_for(guild.me).read_messages:
                         try: # try/except in order to 'continue' out of multiple for loops
-                            for serv_key in settings["channel_ignore_list"]:
+                            for serv_key in gc.settings["channel_ignore_list"]:
                                 if serv_key["guild_name"].lower() == guild.name.lower():
                                     for name in serv_key["ignores"]:
                                         if channel.name.lower() == name.lower():
@@ -84,15 +82,15 @@ async def on_ready():
         # add the channellog to the tree
         gc.guild_log_tree.append(GuildLog(guild, serv_logs))
 
-    if settings["default_guild"] is not None:
-        gc.client.set_current_guild(settings["default_guild"])
+    if gc.settings["default_guild"] is not None:
+        gc.client.set_current_guild(gc.settings["default_guild"])
         if gc.client.current_guild is None:
             print("ERROR: default_guild not found!")
             raise KeyboardInterrupt
             return
-        if settings["default_channel"] is not None:
-            gc.client.current_channel = settings["default_channel"].lower()
-            gc.client.prompt = settings["default_channel"].lower()
+        if gc.settings["default_channel"] is not None:
+            gc.client.current_channel = gc.settings["default_channel"].lower()
+            gc.client.prompt = gc.settings["default_channel"].lower()
 
     # start our own coroutines
     gc.client.loop.create_task(gc.client.run_calls())
@@ -173,6 +171,7 @@ async def on_message_delete(msg):
     log("Could not delete message: {}".format(msg.clean_content))
 
 async def runSimpleHelp():
+    load_config(gc, None)
     curses.wrapper(gc.ui.run)
     draw_help(terminateAfter=True)
 
@@ -183,45 +182,57 @@ def terminate_curses():
     curses.endwin()
 
 def main():
-    # start the client coroutine
-    if settings and settings["debug"]:
-        startLogging()
     token = None
-    try:
-        if sys.argv[1] == "--help" or sys.argv[1] == "-h":
-            try:
-                asyncio.get_event_loop().run_until_complete(runSimpleHelp())
-            except SystemExit:
-                pass
-            terminate_curses()
-            quit()
-        elif sys.argv[1] == "--token" or sys.argv[1] == "--store-token":
-            store_token()
-            quit()
-        elif len(sys.argv) == 3 and sys.argv[1] == "--token-path":
-            try:
-                with open(sys.argv[2]) as f:
-                    token = f.read()
-            except:
-                print("Error: Cannot read token from path")
-                quit()
-        elif sys.argv[1] == "--skeleton" or sys.argv[1] == "--copy-skeleton":
-            # -- now handled in utils.settings.py --- #
+    parser = argparse.ArgumentParser(description="A terminal Discord client", \
+            add_help=False)
+    parser.add_argument("-h", "--help", help="Print command line arguments", \
+            action="store_true")
+    parser.add_argument("--store-token", help="Store your token", \
+            action="store_true")
+    parser.add_argument("--copy-skeleton", help="Copy default config", \
+            action="store_true")
+    parser.add_argument("--token-path", help="Specify a token file")
+    parser.add_argument("--config-path", help="Specify a config path")
+    parser.add_argument("-v", "--version", help="Print version", \
+            action="store_true")
+
+    args = parser.parse_args()
+    config_path = None
+    if args.help:
+        try:
+            asyncio.get_event_loop().run_until_complete(runSimpleHelp())
+        except SystemExit:
             pass
-        elif sys.argv[1] == "--config":
-            # -- now handled in utils.settings.py --- #
-            pass
-        elif sys.argv[1] in ("-v", '--version'):
-            commit_id = subprocess.run(("git", "log"), stdout=subprocess.PIPE) \
-                    .stdout.decode("utf-8").split('\n')[0].replace("commit ","")
-            print("Discline-curses at commit {}".format(commit_id[:8]))
+        terminate_curses()
+        quit()
+    elif args.store_token:
+        store_token()
+        quit()
+    elif args.copy_skeleton:
+        copy_skeleton()
+        quit()
+    elif args.version:
+        commit_id = subprocess.run(("git", "log"), stdout=subprocess.PIPE) \
+                .stdout.decode("utf-8").split('\n')[0].replace("commit ","")
+        print("Discline-curses at commit {}".format(commit_id[:8]))
+        quit()
+    if args.token_path:
+        try:
+            with open(args.token_path) as f:
+                token = f.read().strip()
+        except:
+            print("Error: Cannot read token from path")
             quit()
-        else:
-            print(gc.term.red("Error: Unknown command."))
-            print(gc.term.yellow("See --help for options."))
-            quit()
-    except IndexError:
-        pass
+    if args.config_path:
+        config_path = args.config_path
+
+    load_config(gc, config_path)
+
+    log_messages = False
+    if gc.settings and gc.settings["debug"]:
+        if gc.settings["message_log"]:
+            log_messages = True
+        startLogging(log_messages)
 
     check_for_updates()
     if token is None:

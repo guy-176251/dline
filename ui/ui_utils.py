@@ -1,33 +1,24 @@
-import sys
-import math
-from datetime import datetime, timedelta
-import asyncio
-import curses
-import signal
-import logging
+from datetime import timedelta
 import re
-import io
 from discord import MessageType, Member
-from utils.log import log
-from utils.settings import settings
 
-def get_role_color(r, colors):
+def get_role_color(r, gc):
     color = ""
     try:
-        for role in settings["custom_roles"]:
+        for role in gc.settings["custom_roles"]:
             if r == role["name"].lower():
-                color = colors[role["color"]]
+                color = gc.ui.colors[role["color"]]
 
         if color is not "": # The user must have already been assigned a custom role
             pass
-        elif settings["normal_user_color"] is not None:
-            color = colors[settings["normal_user_color"]]
-        else: color = colors["green"]
+        elif gc.settings["normal_user_color"] is not None:
+            color = gc.ui.colors[gc.settings["normal_user_color"]]
+        else: color = gc.ui.colors["green"]
     # if this fails, the user either left or was banned
     except:
-        if settings["normal_user_color"] is not None:
-            color = colors[settings["normal_user_color"]]
-        else: color = colors["green"]
+        if gc.settings["normal_user_color"] is not None:
+            color = gc.ui.colors[gc.settings["normal_user_color"]]
+        else: color = gc.ui.colors["green"]
     return color
 
 def calc_mutations(msg):

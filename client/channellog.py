@@ -1,5 +1,4 @@
 from discord import TextChannel, GroupChannel, DMChannel, abc, iterators
-from utils.log import log
 
 class PrivateChannel(abc.Messageable):
     def __init__(self, channel, guild, position):

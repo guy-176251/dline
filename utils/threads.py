@@ -1,5 +1,4 @@
 import threading
-import asyncio
 import curses
 import time
 

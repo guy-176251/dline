@@ -1,5 +1,3 @@
-from discord import Guild
-from client.channellog import ChannelLog
 
 class PrivateGuild:
     def __init__(self):

@@ -1,12 +1,7 @@
 import os
-import sys
 from yaml import safe_load, YAMLError
 from blessings import Terminal
-
-class OutdatedConfigException(Exception):
-    pass
-
-settings = ""
+from utils.globals import OutdatedConfigException
 
 def copy_skeleton():
     term = Terminal()
@@ -34,27 +29,14 @@ def copy_skeleton():
         print("ERROR: Could not create skeleton file:", e)
         quit()
 
-def load_config():
-    arg = ""
-    path = ""
-    try:
-        arg = sys.argv[1]
-    except IndexError:
-        pass
-    if not path:
-        try:
-            if arg == "--config":
-                path = sys.argv[2]
-            else:
-                path = os.getenv("HOME") + "/.config/Discline/config"
-        except IndexError:
-            print("ERROR: No path specified.")
-            quit()
-    global settings
+def load_config(gc, config_path=None):
+    path = os.getenv("HOME") + "/.config/Discline/config"
+    if config_path is not None:
+        path = config_path
     try:
         with open(path) as f:
-            settings = safe_load(f)
-        if "show_user_win" not in settings:
+            gc.settings = safe_load(f)
+        if "show_user_win" not in gc.settings:
             raise OutdatedConfigException
     except YAMLError:
         print("ERROR: Invalid config. Check and try again.")
@@ -68,18 +50,3 @@ def load_config():
     except:
         print("ERROR: Could not load config.")
         quit()
-
-arg = ""
-try:
-    arg = sys.argv[1]
-except IndexError:
-    pass
-
-doLoad = True
-if arg == "--store-token" or arg == "--token":
-    doLoad = False
-elif arg == "--skeleton" or arg == "--copy-skeleton":
-    copy_skeleton()
-    quit()
-if doLoad:
-    load_config()

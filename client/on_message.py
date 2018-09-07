@@ -1,11 +1,9 @@
-import asyncio
 import curses
 from discord import TextChannel, DMChannel, GroupChannel
 from ui.ui_utils import calc_mutations
 import ui.ui as ui
 from utils.log import log
 from utils.globals import gc
-from utils.settings import settings
 
 async def process_message(msg, channel_log):
     if channel_log.channel not in gc.channels_entered:
@@ -21,8 +19,8 @@ async def process_message(msg, channel_log):
             channel_log.unread = True
     if msg.guild is not None and \
             msg.guild.me.mention in msg.content and \
-            "beep_mentions" in settings and \
-            settings["beep_mentions"]:
+            "beep_mentions" in gc.settings and \
+            gc.settings["beep_mentions"]:
         curses.beep()
         log("Beep!")
     if channel_log is gc.client.current_channel_log:

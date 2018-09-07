@@ -1,9 +1,16 @@
 import os
 import logging
 from datetime import datetime
-from utils.settings import settings
 
-def startLogging():
+logging_enabled = False
+message_logging_enabled = False
+
+def startLogging(do_msg_log=False):
+    global logging_enabled
+    logging_enabled = True
+    if do_msg_log:
+        global message_logging_enabled
+        message_logging_enabled = True
     configPath = os.getenv("HOME") + "/.config/Discline"
     if os.path.exists(configPath):
         logging.basicConfig(filename=configPath + "/discline.log", filemode='w',
@@ -12,14 +19,12 @@ def startLogging():
         logging.basicConfig(filename="discline.log", filemode='w', level=logging.INFO)
 
 def log(msg, func=logging.info):
-    if settings["debug"]:
-        func(msg)
+    if not logging_enabled:
+        return
+    func(msg)
 
 def msglog(message):
-    try:
-        if not settings['message_log']:
-            return
-    except:
+    if not message_logging_enabled:
         return
     guild_name = message.guild.name.replace('/','_')
     channel_name = message.channel.name

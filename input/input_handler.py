@@ -1,17 +1,12 @@
-import asyncio
 import curses
 import logging
 import re
 import time
-import discord
 import ui.ui as ui
 from utils.log import log
-from utils.globals import gc, kill
-from utils.settings import settings
-from commands.text_emoticons import check_emoticons
+from utils.globals import gc
 from commands.sendfile import send_file
 from commands.channel_jump import channel_jump
-from input.messageEdit import MessageEdit
 
 def key_input():
     # if the next two aren't here, input does not work
@@ -24,7 +19,6 @@ def key_input():
             call[0].__name__ in gc.ui_thread.locks:
         time.sleep(0.01)
     while not gc.doExit:
-        prompt = gc.client.prompt
         ch = editWin.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
             time.sleep(0.01)
@@ -37,11 +31,11 @@ def key_input():
         if chr(ch) == '\n' and not gc.ui.messageEdit.inputBuffer:
             continue
         if ch == curses.KEY_PPAGE:
-            gc.ui.channel_log_offset -= settings["scroll_lines"]
+            gc.ui.channel_log_offset -= gc.settings["scroll_lines"]
             ui.draw_screen()
             continue
         elif ch == curses.KEY_NPAGE:
-            gc.ui.channel_log_offset += settings["scroll_lines"]
+            gc.ui.channel_log_offset += gc.settings["scroll_lines"]
             ui.draw_screen()
             continue
         elif ch == curses.KEY_RESIZE:
@@ -76,7 +70,7 @@ def key_input():
     gc.tasksExited += 1
 
 def typing_handler():
-    if not settings["send_is_typing"]: return
+    if not gc.settings["send_is_typing"]: return
 
     log("typing_handler started")
     while not gc.doExit:
@@ -99,7 +93,7 @@ def typing_handler():
 
 def input_handler(text):
     # Must be a command
-    if text.startswith(settings["prefix"]):
+    if text.startswith(gc.settings["prefix"]):
         text = text[1:]
         arg = None
         if ' ' in text:
@@ -161,6 +155,7 @@ def parseCommand(command, arg=None):
         elif command in ("channels", "chans"): ui.draw_channellist()
         elif command == "emojis": ui.draw_emojilist()
         elif command in ("users", "members"): ui.draw_userlist()
+        elif command == "nick": change_nick()
         elif command[0] == 'c':
             try:
                 if command[1].isdigit():
@@ -170,7 +165,7 @@ def parseCommand(command, arg=None):
                 pass
         return
 
-    if command in ('guild', 'gld', 'server', 's'):
+    if command in ('guild', 'g', 'server', 's'):
         prev_guild = gc.client.current_guild
         gc.client.set_current_guild(arg)
         if gc.client.current_guild is prev_guild:
@@ -183,14 +178,7 @@ def parseCommand(command, arg=None):
         gc.ui.channel_log_offset = -1
         ui.draw_screen()
     elif command == "nick":
-        try:
-            call = (gc.client.current_guild.me.edit, {'nick':arg})
-            gc.client.async_funcs.append(call)
-            while call in gc.client.async_funcs or \
-                    call[0].__name__ in gc.client.locks:
-                time.sleep(0.1)
-        except:
-            pass
+        change_nick(arg)
         return
     elif command in ("game", "activity"):
         call = (gc.client.set_activity, arg)
@@ -213,6 +201,16 @@ def parseCommand(command, arg=None):
             while call in gc.client.async_funcs or \
                     call[0].__name__ in gc.client.locks:
                 time.sleep(0.1)
+
+def change_nick(arg=None):
+    try:
+        call = (gc.client.current_guild.me.edit, {'nick':arg})
+        gc.client.async_funcs.append(call)
+        while call in gc.client.async_funcs or \
+                call[0].__name__ in gc.client.locks:
+            time.sleep(0.1)
+    except:
+        pass
 
 def parseEmoji(text):
     if gc.client.user.premium:

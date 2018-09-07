@@ -6,7 +6,7 @@ def get_token():
         token = ""
         try:
             f = open(os.getenv("HOME") + "/.config/Discline/token", "r")
-            token = f.read()
+            token = f.read().strip()
             f.close()
         except: pass
 
@@ -28,22 +28,20 @@ def store_token():
     try:
         token=sys.argv[2]
     except IndexError:
-        print(Terminal().red("Error: You did not specify a token!"))
-        quit()
+        print("Token not specified in arguments. Reading from stdin.")
+        while True:
+            token = input().strip()
+            if len(token) == 0:
+                print("Please enter a valid token!")
+                continue
+            break
 
     if not os.path.exists(os.getenv("HOME") + "/.config/Discline"):
         os.mkdir(os.getenv("HOME") + "/.config/Discline")
 
     if token is not None and token != "":
         # trim off quotes if user added them
-        token = token.strip('"')
-        token = token.strip("'")
-
-    # ------- Token format seems to vary, disabling this check for now -------- #
-    # if token is None or len(token) < 59 or len(token) > 88:
-        # print(Terminal().red("Error: Bad token. Did you paste it correctly?"))
-        # quit()
-    # ------------------------------------------------------------------------- #
+        token = token.strip('"').strip("'")
 
     try:
         f = open(os.getenv("HOME") + "/.config/Discline/token", "w")

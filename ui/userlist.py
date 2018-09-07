@@ -1,4 +1,3 @@
-from os import system
 from discord import Status
 
 # On call of the /users command, this will print

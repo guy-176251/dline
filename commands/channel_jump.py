@@ -1,8 +1,5 @@
-import asyncio
 from utils.globals import gc
 from utils.quicksort import quick_sort_channel_logs
-from utils.settings import settings
-import ui.ui as ui
 
 def channel_jump(arg):
     logs = []
@@ -10,7 +7,7 @@ def channel_jump(arg):
     num = int(arg[1:]) - 1
 
     # sub one to allow for "/c0" being the top channel
-    if settings["arrays_start_at_zero"]:
+    if gc.settings["arrays_start_at_zero"]:
         num -= 1
 
     # in case someone tries to go to a negative index

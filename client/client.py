@@ -4,17 +4,9 @@ import logging
 import discord
 from client.channellog import PrivateChannel
 from utils.log import log
-from utils.globals import gc, kill
-from utils.settings import settings
+from utils.globals import gc, Found, NoChannelsFoundException
 from ui.ui_utils import calc_mutations
-import ui.ui as ui
 from ui.view import init_view
-from ui.formattedText import FormattedText
-
-class Found(Exception):
-    pass
-class NoChannelsFoundException(Exception):
-    pass
 
 # inherits from discord.py's Client
 class Client(discord.Client):
@@ -79,7 +71,7 @@ class Client(discord.Client):
                                 chan.position < lowest:
                             try:
                                 # Skip over ignored channels
-                                for serv_key in settings["channel_ignore_list"]:
+                                for serv_key in gc.settings["channel_ignore_list"]:
                                     if serv_key["guild_name"].lower() == gld.name:
                                         for name in serv_key["ignores"]:
                                             if chan.name.lower() == name.lower():
@@ -270,7 +262,7 @@ class Client(discord.Client):
                 isinstance(clog.channel, discord.TextChannel) and \
                 clog.channel.permissions_for(clog.guild.me).read_messages:
             try: #TODO: Remove try/except once bug is fixed
-                async for msg in clog.channel.history(limit=settings["max_log_entries"]):
+                async for msg in clog.channel.history(limit=gc.settings["max_log_entries"]):
                     if msg.edited_at is not None:
                         msg.content += " **(edited)**"
                     # needed for modification of past messages

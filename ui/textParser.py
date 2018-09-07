@@ -1,5 +1,4 @@
 import re
-from utils.log import log
 import sys
 import curses
 from io import StringIO
@@ -9,7 +8,6 @@ from mistletoe.block_tokenizer import tokenize as blockTokenize
 from mistletoe.span_token import (RawText, SpanToken, InlineCode,
         Strong, Emphasis,_first_not_none_group)
 from mistletoe.span_tokenizer import tokenize as spanTokenize
-from ui.ui_utils import convert_pin, trim_emoji
 
 hasItalic = False
 if sys.version_info >= (3,7):
