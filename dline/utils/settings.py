@@ -1,24 +1,27 @@
 import os
 from yaml import safe_load, YAMLError
 from blessings import Terminal
-from utils.globals import OutdatedConfigException
+from dline.utils.globals import OutdatedConfigException
 
 def copy_skeleton():
     term = Terminal()
+    import dline
+    package_path = os.path.dirname(dline.__file__)
     try:
         from shutil import copyfile
-        if not os.path.exists(os.getenv("HOME") + "/.config/Discline"):
-            os.makedirs(os.getenv("HOME") + "/.config/Discline", exist_ok=True)
+        if not os.path.exists(os.getenv("HOME") + "/.config/dline"):
+            os.makedirs(os.getenv("HOME") + "/.config/dline", exist_ok=True)
 
-        if os.path.exists(os.getenv("HOME") + "/.config/Discline/config"):
+        if os.path.exists(os.getenv("HOME") + "/.config/dline/config.yaml"):
             try:
-                os.remove(os.getenv("HOME") + "/.config/Discline/config")
+                os.remove(os.getenv("HOME") + "/.config/dline/config.yaml")
             except:
                 pass
 
-        copyfile("res/settings-skeleton.yaml", os.getenv("HOME") + "/.config/Discline/config", follow_symlinks=True)
-        print(term.green("Skeleton copied!" + term.normal))
-        print(term.cyan("Your configuration file can be found at ~/.config/Discline"))
+        copyfile(package_path+"/res/settings-skeleton.yaml", os.getenv("HOME") + \
+                "/.config/dline/config.yaml", follow_symlinks=True)
+        print("Skeleton copied!")
+        print("Your configuration file can be found at ~/.config/dline")
 
     except KeyboardInterrupt:
         print("Cancelling...")
@@ -30,7 +33,7 @@ def copy_skeleton():
         quit()
 
 def load_config(gc, config_path=None):
-    path = os.getenv("HOME") + "/.config/Discline/config"
+    path = os.getenv("HOME") + "/.config/dline/config.yaml"
     if config_path is not None:
         path = config_path
     try:

@@ -3,8 +3,8 @@ import time
 from os import path
 from getpass import getuser
 import discord
-from utils.globals import gc
-from ui.ui import set_display
+from dline.utils.globals import gc
+from dline.ui.ui import set_display
 
 def send_file(filepath):
 

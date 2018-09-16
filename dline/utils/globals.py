@@ -11,7 +11,7 @@ class OutdatedConfigException(Exception):
 
 class GlobalsContainer:
     def __init__(self):
-        from utils.threads import UiThread
+        from dline.utils.threads import UiThread
         self.settings = {}
         self.term = Terminal()
         self.client = None
@@ -27,7 +27,7 @@ class GlobalsContainer:
         self.tasksExited = 0
 
     def initClient(self):
-        from client.client import Client
+        from dline.client.client import Client
         try:
             messages=self.settings["max_messages"]
         except:

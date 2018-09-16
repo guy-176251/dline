@@ -1,4 +1,4 @@
-from ui.formattedText import FormattedText
+from dline.ui.formattedText import FormattedText
 
 class View:
     def __init__(self, name):

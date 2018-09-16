@@ -1,35 +1,36 @@
 #!/usr/bin/env python3.7
 # ------------------------------------------------------- #
 #                                                         #
-# Discline-curses                                         #
+# dline                                                   #
 #                                                         #
-# http://github.com/NatTupper/Discline-curses             #
+# http://github.com/NatTupper/dline                       #
 #                                                         #
 # Licensed under GNU GPLv3                                #
 #                                                         #
 # ------------------------------------------------------- #
 
+import os
 import asyncio
 import curses
 import subprocess
 import argparse
 from discord import TextChannel
-from input.input_handler import key_input, typing_handler
-from ui.ui import draw_screen, draw_help
-from utils.globals import gc, kill, Found
-from utils.settings import copy_skeleton, load_config
-from utils.updates import check_for_updates
-from utils.threads import WorkerThread
-from utils.token_utils import get_token, store_token
-from utils.log import log, startLogging, msglog
-from client.guildlog import PrivateGuild, GuildLog
-from client.channellog import PrivateChannel, ChannelLog
-from client.on_message import on_incoming_message
+from dline.input.input_handler import key_input, typing_handler
+from dline.ui.ui import draw_screen, draw_help
+from dline.utils.globals import gc, kill, Found
+from dline.utils.settings import copy_skeleton, load_config
+from dline.utils.updates import check_for_updates
+from dline.utils.threads import WorkerThread
+from dline.utils.token_utils import get_token, store_token
+from dline.utils.log import log, startLogging, msglog
+from dline.client.guildlog import PrivateGuild, GuildLog
+from dline.client.channellog import PrivateChannel, ChannelLog
+from dline.client.on_message import on_incoming_message
 
 init_complete = False
 
 # Set terminal X11 window title
-print('\33]0;Discline\a', end='', flush=True)
+print('\33]0;dline\a', end='', flush=True)
 
 gc.initClient()
 
@@ -181,6 +182,13 @@ def terminate_curses():
     curses.echo()
     curses.endwin()
 
+def convert_confdir():
+    from shutil import move
+    move(os.getenv("HOME")+"/.config/Discline", \
+            os.getenv("HOME")+"/.config/dline")
+    move(os.getenv("HOME")+"/.config/dline/config", \
+            os.getenv("HOME")+"/.config/dline/config.yaml")
+
 def main():
     token = None
     parser = argparse.ArgumentParser(description="A terminal Discord client", \
@@ -197,6 +205,9 @@ def main():
             action="store_true")
 
     args = parser.parse_args()
+    # check for legacy config path
+    if os.path.exists(os.getenv("HOME") + "/.config/Discline"):
+        convert_confdir()
     config_path = None
     if args.help:
         try:
@@ -214,7 +225,7 @@ def main():
     elif args.version:
         commit_id = subprocess.run(("git", "log"), stdout=subprocess.PIPE) \
                 .stdout.decode("utf-8").split('\n')[0].replace("commit ","")
-        print("Discline-curses at commit {}".format(commit_id[:8]))
+        print("dline at commit {}".format(commit_id[:8]))
         quit()
     if args.token_path:
         try:

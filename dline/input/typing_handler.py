@@ -1,5 +1,5 @@
 import asyncio
-from utils.globals import gc
+from dline.utils.globals import gc
 
 async def is_typing_handler():
     # user specified setting in settings.py

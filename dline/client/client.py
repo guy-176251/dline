@@ -2,12 +2,12 @@ import sys
 import asyncio
 import logging
 import discord
-from client.channellog import PrivateChannel
-from utils.log import log
-from utils.globals import gc, Found, NoChannelsFoundException
-from ui.ui_utils import calc_mutations
-from ui.ui import set_display
-from ui.view import init_view
+from dline.client.channellog import PrivateChannel
+from dline.utils.log import log
+from dline.utils.globals import gc, Found, NoChannelsFoundException
+from dline.ui.ui_utils import calc_mutations
+from dline.ui.ui import set_display
+from dline.ui.view import init_view
 
 # inherits from discord.py's Client
 class Client(discord.Client):

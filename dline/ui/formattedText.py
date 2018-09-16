@@ -1,8 +1,8 @@
 import curses
 from collections import deque
 import unicodedata
-from utils.globals import gc
-from ui.textParser import parseText
+from dline.utils.globals import gc
+from dline.ui.textParser import parseText
 
 def findWidth(s):
     width = 0

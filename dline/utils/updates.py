@@ -1,6 +1,6 @@
 def check_for_updates():
-    from utils.globals import gc
     from os import path
+    from dline.utils.globals import gc
 
     if not path.exists(".git"):
         print(gc.term.red("Error: client not started from repo location! Cancelling..."))

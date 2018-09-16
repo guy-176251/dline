@@ -1,7 +1,7 @@
-# ![logo_small.png](res/logo/logo_small.png) Discline-curses
+# ![logo_small.png](images/logo/logo_small.png)
 ------------------------------
 
-![screenshot_main.png](res/screenshots/screenshot_main.png)
+![screenshot_main.png](images/screenshots/screenshot_main.png)
 
 __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support for Windows comes back
 
@@ -12,11 +12,11 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
 1. Install the dependencies:
 
-    `pip3 install --user asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe==0.6.2`
+    `pip3 install --user -r requirements.txt`
 
 2. Clone the repo
 
-    `git clone https://github.com/NatTupper/Discline`
+    `git clone https://github.com/NatTupper/dline`
 
 3. Find your discord "token"
 
@@ -30,17 +30,13 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 
     If all else fails, join the dev discord and we'll be glad to help!
 
-4. Run `python3 launcher.py --store-token` to store your token
+4. Run `dline --store-token` to store your token
 
-5. Run `python3 launcher.py --copy-skeleton` to get a template config
+5. Run `dline --copy-skeleton` to get a template config
 
-6. Edit `~/.config/Discline/config` to your choosing.
+6. Edit `~/.config/dline/config.yaml` to your choosing.
 
-7. Launch with python3
-
-    `python3 launcher.py`
-
-    *(alternatively if you have python3.6 you can simply use `./Discline.py` or `python3.6 Discline.py`)*
+7. Launch with `dline`
 
 
 ### Current Features
@@ -67,7 +63,7 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 * channel logs blink red upon unread messages
 * line scrolling
 * discord "Nitro" emojis
-* Externalized configs via YAML ~/.config/Discline/config
+* Externalized configs via YAML ~/.config/dline/config.yaml
 * @member expansion/mentions
 * /status to change online presence
 
@@ -95,14 +91,15 @@ __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support 
 2. Install `pip3`, normally called `python3-pip` in package managers
 3. Download the dependencies using pip with the following command:
 
-    `pip3 install --user asyncio https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py blessings pyyaml mistletoe`
+    `pip3 install --user -r requirements.txt`
 
 
 ### Color Customization
 ------------------------
 
 Almost all aspects of the client can be colored to
-the user's wishes. You can set these colors from within `~/.config/Discline/config`
+the user's wishes. You can set these colors from within
+`~/.config/dline/config.yaml`
 
 Note: These assume that you're using the standard terminal colors. If you
 have colors already defined in your ~/.Xresources or similar, this will
@@ -110,12 +107,9 @@ be very confusing.
 
 ## Launching
 ------------------------
-Discline uses git for automatic updates, so you must be within the Discline
+dline uses git for automatic updates, so you must be within the dline
 directory upon starting. Manually you can launch via `python3.6 ./launcher.py`,
 however it is advised to create a helper script to do this for you.
-
-An example script is in the /res/scripts folder,
-edit it to suit your system and tastes.
 
 ### A Note On Emojis
 -------------------------
@@ -208,7 +202,7 @@ and make sure it gets sourced upon opening your terminal.
 ### Misc Screenshots
 --------------------------
 
-![Image](res/screenshots/kingk22-screenshot.png)
+![Image](images/screenshots/kingk22-screenshot.png)
 
 ![Image](https://0x0.st/sH5g.png)
 
@@ -216,7 +210,7 @@ and make sure it gets sourced upon opening your terminal.
 
 It can even be configured to hide most elements of the UI in the config:
 
-![Image](res/screenshots/minimal_brown_ss.png)
+![Image](images/screenshots/minimal_brown_ss.png)
 
 ### Known Bugs
 --------------------------

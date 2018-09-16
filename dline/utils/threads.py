@@ -2,8 +2,8 @@ import threading
 import curses
 import time
 
-from utils.log import log
-from ui.ui import CursesUi
+from dline.utils.log import log
+from dline.ui.ui import CursesUi
 
 class WorkerThread(threading.Thread):
     def __init__(self, gc, func):

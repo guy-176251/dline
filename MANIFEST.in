@@ -1,0 +1,3 @@
+include dline/res/settings-skeleton.yaml
+include README.md
+include LICENSE

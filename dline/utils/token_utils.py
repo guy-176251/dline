@@ -1,11 +1,11 @@
 import os
-from utils.globals import gc
+from dline.utils.globals import gc
 
 def get_token():
-    if os.path.exists(os.getenv("HOME") + "/.config/Discline/token"):
+    if os.path.exists(os.getenv("HOME") + "/.config/dline/token"):
         token = ""
         try:
-            f = open(os.getenv("HOME") + "/.config/Discline/token", "r")
+            f = open(os.getenv("HOME") + "/.config/dline/token", "r")
             token = f.read().strip()
             f.close()
         except: pass
@@ -36,15 +36,15 @@ def store_token():
                 continue
             break
 
-    if not os.path.exists(os.getenv("HOME") + "/.config/Discline"):
-        os.mkdir(os.getenv("HOME") + "/.config/Discline")
+    if not os.path.exists(os.getenv("HOME") + "/.config/dline"):
+        os.mkdir(os.getenv("HOME") + "/.config/dline")
 
     if token is not None and token != "":
         # trim off quotes if user added them
         token = token.strip('"').strip("'")
 
     try:
-        f = open(os.getenv("HOME") + "/.config/Discline/token", "w")
+        f = open(os.getenv("HOME") + "/.config/dline/token", "w")
         f.write(token)
         f.close()
         print(Terminal().green("Token stored!"))

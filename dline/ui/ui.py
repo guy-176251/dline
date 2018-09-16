@@ -2,12 +2,12 @@ import sys
 import time
 import curses, curses.panel
 from discord import VoiceChannel, CategoryChannel
-from client.channellog import PrivateChannel
-from input.messageEdit import MessageEdit
-from utils.log import log
-from ui.ui_utils import get_role_color
-from ui.userlist import UserList
-from utils.quicksort import quick_sort_channels, quick_sort_channel_logs
+from dline.client.channellog import PrivateChannel
+from dline.input.messageEdit import MessageEdit
+from dline.utils.log import log
+from dline.ui.ui_utils import get_role_color
+from dline.ui.userlist import UserList
+from dline.utils.quicksort import quick_sort_channels, quick_sort_channel_logs
 
 hasItalic = False
 if sys.version_info >= (3,7):
@@ -265,7 +265,7 @@ class CursesUi:
         if self.displayPanel.hidden():
             self.redrawFrames()
 
-from utils.globals import gc
+from dline.utils.globals import gc
 
 def draw_screen():
     log("Updating")
@@ -785,11 +785,11 @@ def draw_help(terminateAfter=False):
         [("-----", gc.ui.colors["red"])],
         [("--copy-skeleton", gc.ui.colors["yellow"]),
             ('---', gc.ui.colors["cyan"]), ("copies template settings", 0)],
-        [("This file can be found at ~/.config/Discline/config", gc.ui.colors["cyan"])],
+        [("This file can be found at ~/.config/dline/config.yaml", gc.ui.colors["cyan"])],
         [],
         [("--store-token", gc.ui.colors["yellow"]),
             ('---', gc.ui.colors["cyan"]), ("stores your token", 0)],
-        [("This file can be found at ~/.config/Discline/token", gc.ui.colors["cyan"])],
+        [("This file can be found at ~/.config/dline/token", gc.ui.colors["cyan"])],
         [],
         [("--config-path", gc.ui.colors["yellow"]),
             ('---', gc.ui.colors["cyan"]), ("specify a specific config path", 0)],
@@ -828,7 +828,7 @@ def draw_help(terminateAfter=False):
         [("This can be configured to start at 0 in your config", gc.ui.colors["cyan"])],
         [],
         [("/quit", gc.ui.colors["yellow"]),
-            ('-', gc.ui.colors["cyan"]), ("exit Discline", 0)],
+            ('-', gc.ui.colors["cyan"]), ("exit dline", 0)],
         [],
         [],
         [("(Press q to quit this dialog)", gc.ui.colors["green"])]

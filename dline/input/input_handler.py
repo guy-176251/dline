@@ -2,11 +2,11 @@ import curses
 import logging
 import re
 import time
-import ui.ui as ui
-from utils.log import log
-from utils.globals import gc
-from commands.sendfile import send_file
-from commands.channel_jump import channel_jump
+from dline.ui import ui
+from dline.utils.log import log
+from dline.utils.globals import gc
+from dline.commands.sendfile import send_file
+from dline.commands.channel_jump import channel_jump
 
 def key_input():
     # if the next two aren't here, input does not work

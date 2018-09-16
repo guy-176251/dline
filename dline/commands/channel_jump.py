@@ -1,5 +1,5 @@
-from utils.globals import gc
-from utils.quicksort import quick_sort_channel_logs
+from dline.utils.globals import gc
+from dline.utils.quicksort import quick_sort_channel_logs
 
 def channel_jump(arg):
     logs = []

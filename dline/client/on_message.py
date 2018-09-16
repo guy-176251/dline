@@ -1,9 +1,9 @@
 import curses
 from discord import TextChannel, DMChannel, GroupChannel
-from ui.ui_utils import calc_mutations
-import ui.ui as ui
-from utils.log import log
-from utils.globals import gc
+from dline.ui.ui_utils import calc_mutations
+import dline.ui.ui as ui
+from dline.utils.log import log
+from dline.utils.globals import gc
 
 async def process_message(msg, channel_log):
     if channel_log.channel not in gc.channels_entered:

@@ -19,7 +19,7 @@ has_nitro: false
 default_prompt: "~"
 
 # the default 'playing ' status in discord
-default_activity: Discline
+default_activity: dline
 
 # used for various things, your preference
 arrays_start_at_zero: false
