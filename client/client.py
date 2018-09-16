@@ -6,6 +6,7 @@ from client.channellog import PrivateChannel
 from utils.log import log
 from utils.globals import gc, Found, NoChannelsFoundException
 from ui.ui_utils import calc_mutations
+from ui.ui import set_display
 from ui.view import init_view
 
 # inherits from discord.py's Client
@@ -61,6 +62,9 @@ class Client(discord.Client):
             for gldlog in gc.guild_log_tree:
                 gld = gldlog.guild
                 if guild.lower() in gld.name.lower():
+                    if not gld.channels:
+                        set_display("This guild is empty!")
+                        return
                     self._current_guild = gld
                     # find first non-ignored channel, set channel, mark flags as False
                     def_chan = None

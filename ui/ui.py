@@ -2,6 +2,7 @@ import sys
 import time
 import curses, curses.panel
 from discord import VoiceChannel, CategoryChannel
+from client.channellog import PrivateChannel
 from input.messageEdit import MessageEdit
 from utils.log import log
 from ui.ui_utils import get_role_color
@@ -596,9 +597,10 @@ def draw_channellist():
     buf = []
     for channel in channels:
         if (not isinstance(channel, VoiceChannel) and \
-                not isinstance(channel, CategoryChannel)) and \
-                channel.permissions_for(channel.guild.me).read_messages:
-            buf.append((channel.name, 0))
+                not isinstance(channel, CategoryChannel)):
+            if isinstance(channel, PrivateChannel) or \
+                    channel.permissions_for(channel.guild.me).read_messages:
+                buf.append((channel.name, 0))
 
     line_offset = 0
     while True:

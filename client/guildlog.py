@@ -5,10 +5,13 @@ class PrivateGuild:
         self.roles = None
         self.emojis = None
         self.channels = None
+        self.me = None
         self.members = []
 
     def set_channels(self, channels):
         self.channels = channels
+        if not channels:
+            return
         for channel in channels:
             for member in channel.members:
                 if member not in self.members:
