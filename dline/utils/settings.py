@@ -5,8 +5,7 @@ from dline.utils.globals import OutdatedConfigException
 
 def copy_skeleton():
     term = Terminal()
-    import dline
-    package_path = os.path.dirname(dline.__file__)
+    skeleton_path = get_settings_skeleton()
     try:
         from shutil import copyfile
         if not os.path.exists(os.getenv("HOME") + "/.config/dline"):
@@ -18,7 +17,7 @@ def copy_skeleton():
             except:
                 pass
 
-        copyfile(package_path+"/res/settings-skeleton.yaml", os.getenv("HOME") + \
+        copyfile(skeleton_path, os.getenv("HOME") + \
                 "/.config/dline/config.yaml", follow_symlinks=True)
         print("Skeleton copied!")
         print("Your configuration file can be found at ~/.config/dline")
@@ -33,12 +32,16 @@ def copy_skeleton():
         quit()
 
 def load_config(gc, config_path=None):
+    gc.settings = {}
     path = os.getenv("HOME") + "/.config/dline/config.yaml"
     if config_path is not None:
         path = config_path
     try:
         with open(path) as f:
             gc.settings = safe_load(f)
+            if gc.settings is None:
+                gc.settings = {}
+            gc.settings = fill_values(gc.settings)
         if "show_user_win" not in gc.settings:
             raise OutdatedConfigException
     except YAMLError:
@@ -48,8 +51,21 @@ def load_config(gc, config_path=None):
         print("ERROR: Outdated config. Please update your config with --copy-skeleton and run again.")
         quit()
     except OSError:
-        print("ERROR: Could not open config file.")
+        # no config file present
+        gc.settings = fill_values({})
+    except Exception as e:
+        print("ERROR: Could not load config: {}".format(e))
         quit()
-    except:
-        print("ERROR: Could not load config.")
-        quit()
+
+def fill_values(config_dict):
+    s = {}
+    with open(get_settings_skeleton()) as f:
+        s_def = safe_load(f)
+    for key,value in s_def.items():
+        if key not in config_dict:
+            s[key] = value
+    return s
+
+def get_settings_skeleton():
+    import dline
+    return os.path.dirname(dline.__file__)+"/res/settings-skeleton.yaml"

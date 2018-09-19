@@ -13,9 +13,10 @@ with open('requirements.txt') as f:
 
 setup(
     name='dline',
-    version='2.0.1',
+    version='2.1.0',
     description='A feature-rich terminal discord client',
     long_description=readme,
+    long_description_content_type='text/markdown',
     author='Nat Osaka',
     author_email='natthetupper@gmail.com',
     url='https://github.com/NatTupper/dline',
