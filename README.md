@@ -1,7 +1,7 @@
-# ![logo_small.png](images/logo/logo_small.png)
+# ![logo_small.png](https://github.com/NatTupper/dline/raw/rewrite/images/logo/logo_small.png)
 ------------------------------
 
-![screenshot_main.png](images/screenshots/screenshot_main.png)
+![screenshot_main.png](https://github.com/NatTupper/dline/raw/rewrite/images/screenshots/screenshot_main.png)
 
 __**Warning**__: Currently Linux/BSD/Mac only, it may be a while before support for Windows comes back
 
@@ -183,7 +183,7 @@ and make sure it gets sourced upon opening your terminal.
 ### Misc Screenshots
 --------------------------
 
-![Image](images/screenshots/kingk22-screenshot.png)
+![Image](https://github.com/NatTupper/dline/raw/rewrite/images/screenshots/kingk22-screenshot.png)
 
 ![Image](https://0x0.st/sH5g.png)
 
@@ -191,7 +191,7 @@ and make sure it gets sourced upon opening your terminal.
 
 It can even be configured to hide most elements of the UI in the config:
 
-![Image](images/screenshots/minimal_brown_ss.png)
+![Image](https://github.com/NatTupper/dline/raw/rewrite/images/screenshots/minimal_brown_ss.png)
 
 ### Known Bugs
 --------------------------
