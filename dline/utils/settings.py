@@ -42,7 +42,7 @@ def load_config(gc, config_path=None):
             if gc.settings is None:
                 gc.settings = {}
             gc.settings = fill_values(gc.settings)
-        if "show_user_win" not in gc.settings:
+        if "show_user_bar" in gc.settings:
             raise OutdatedConfigException
     except YAMLError:
         print("ERROR: Invalid config. Check and try again.")
@@ -58,7 +58,7 @@ def load_config(gc, config_path=None):
         quit()
 
 def fill_values(config_dict):
-    s = {}
+    s = config_dict
     with open(get_settings_skeleton()) as f:
         s_def = safe_load(f)
     for key,value in s_def.items():

@@ -113,8 +113,6 @@ Like emojis, not all terminals and fonts support italic/bold/underline and
 for you, odds are you are not using a supported terminal/font. Experiment with
 different setups to see what works.
 
-![Image](https://0x0.st/sHQ0.png)
-
 *Letting me know what setups __don't__ work helps a lot!*
 
 ### Dude this is awesome! How can I support the project?
@@ -184,10 +182,6 @@ and make sure it gets sourced upon opening your terminal.
 --------------------------
 
 ![Image](https://github.com/NatTupper/dline/raw/rewrite/images/screenshots/kingk22-screenshot.png)
-
-![Image](https://0x0.st/sH5g.png)
-
-![Image](https://0x0.st/sHjn.png)
 
 It can even be configured to hide most elements of the UI in the config:
 
