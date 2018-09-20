@@ -238,7 +238,8 @@ class CursesUi:
             y_offset = 1
             self.frameWin.hline(y_offset,0, curses.ACS_HLINE, self.max_x)
         # redraw bottom frame
-        self.frameWin.hline(self.max_y-2,0, curses.ACS_HLINE, self.max_x)
+        if self.separatorsVisible:
+            self.frameWin.hline(self.max_y-2,0, curses.ACS_HLINE, self.max_x)
         # redraw left frame
         if self.leftWinVisible and self.separatorsVisible:
             self.frameWin.vline(y_offset+1,self.leftWinWidth, curses.ACS_VLINE,
