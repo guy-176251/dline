@@ -13,7 +13,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='dline',
-    version='2.1.3',
+    version='2.1.4',
     description='A feature-rich terminal discord client',
     long_description=readme,
     long_description_content_type='text/markdown',
