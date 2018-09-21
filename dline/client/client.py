@@ -45,6 +45,11 @@ class Client(discord.Client):
                 self.locks.remove(func.__name__)
             await asyncio.sleep(0.01)
 
+    async def on_error(self, event_method, *args, **kwargs):
+        import traceback
+        log('Ignoring exception in {}'.format(event_method))
+        traceback.print_exc()
+
     @property
     def prompt(self):
         return self._prompt
