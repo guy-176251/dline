@@ -114,17 +114,20 @@ class CursesUi:
     def resize(self):
         self.max_y, self.max_x = self.screen.getmaxyx()
         self.clearWins()
-        if self.separatorsVisible:
-            self.makeFrameWin(resize=True)
-        if self.topWinVisible:
-            self.makeTopWin(resize=True)
-        self.makeBottomWin(resize=True)
-        if self.leftWinVisible:
-            self.makeLeftWin(resize=True)
-        if self.userWinVisible:
-            self.makeUserWin(resize=True)
-        self.makeChatWin(resize=True)
-        self.makeDisplay(resize=True)
+        try:
+            if self.separatorsVisible:
+                self.makeFrameWin(resize=True)
+            if self.topWinVisible:
+                self.makeTopWin(resize=True)
+            self.makeBottomWin(resize=True)
+            if self.leftWinVisible:
+                self.makeLeftWin(resize=True)
+            if self.userWinVisible:
+                self.makeUserWin(resize=True)
+            self.makeChatWin(resize=True)
+            self.makeDisplay(resize=True)
+        except Exception as e:
+            log("Failed to resize windows. Error: {}".format(e))
         self.messageEdit.termWidth = self.messageEdit.width = self.max_x
         self.redrawFrames()
         draw_screen()
@@ -234,24 +237,31 @@ class CursesUi:
     def redrawFrames(self):
         # redraw top frame
         y_offset = 0
-        if self.topWinVisible and self.separatorsVisible:
-            y_offset = 1
-            self.frameWin.hline(y_offset,0, curses.ACS_HLINE, self.max_x)
-        # redraw bottom frame
-        if self.separatorsVisible:
-            self.frameWin.hline(self.max_y-2,0, curses.ACS_HLINE, self.max_x)
-        # redraw left frame
-        if self.leftWinVisible and self.separatorsVisible:
-            self.frameWin.vline(y_offset+1,self.leftWinWidth, curses.ACS_VLINE,
-                    self.max_y-y_offset-3)
-            self.frameWin.addch(y_offset,self.leftWinWidth, curses.ACS_TTEE)
-            self.frameWin.addch(self.max_y-2,self.leftWinWidth, curses.ACS_BTEE)
-        # redraw user frame
-        if self.userWinVisible and self.separatorsVisible:
-            self.frameWin.vline(y_offset+1,self.max_x-self.userWinWidth-1, curses.ACS_VLINE,
-                    self.max_y-y_offset-3)
-            self.frameWin.addch(y_offset,self.max_x-self.userWinWidth-1, curses.ACS_TTEE)
-            self.frameWin.addch(self.max_y-2,self.max_x-self.userWinWidth-1, curses.ACS_BTEE)
+        color = gc.ui.colors[gc.settings['separator_color']]
+        self.frameWin.attron(color)
+        try:
+            if self.topWinVisible and self.separatorsVisible:
+                y_offset = 1
+                self.frameWin.hline(y_offset,0, curses.ACS_HLINE, self.max_x)
+            # redraw bottom frame
+            if self.separatorsVisible:
+                self.frameWin.hline(self.max_y-2,0, curses.ACS_HLINE, self.max_x)
+            # redraw left frame
+            if self.leftWinVisible and self.separatorsVisible:
+                self.frameWin.vline(y_offset+1,self.leftWinWidth, curses.ACS_VLINE,
+                        self.max_y-y_offset-3)
+                self.frameWin.addch(y_offset,self.leftWinWidth, curses.ACS_TTEE)
+                self.frameWin.addch(self.max_y-2,self.leftWinWidth, curses.ACS_BTEE)
+            # redraw user frame
+            if self.userWinVisible and self.separatorsVisible:
+                self.frameWin.vline(y_offset+1,self.max_x-self.userWinWidth-1, curses.ACS_VLINE,
+                        self.max_y-y_offset-3)
+                self.frameWin.addch(y_offset,self.max_x-self.userWinWidth-1, curses.ACS_TTEE)
+                self.frameWin.addch(self.max_y-2,self.max_x-self.userWinWidth-1, curses.ACS_BTEE)
+        except Exception as e:
+            # if we're here, text has failed to draw
+            log("Failed to draw frames. Error: {}".format(e))
+        self.frameWin.attroff(color)
         self.frameWin.refresh()
 
     def toggleDisplay(self):
@@ -343,7 +353,8 @@ def draw_top_win():
         topWin.addstr(0,onlineOffset, "Users online: ", color)
         topWin.addstr(online)
     except Exception as e:
-        log("e: {}".format(e))
+        # if we're here, text has failed to draw
+        log("Failed to draw top window. Error: {}".format(e))
 
     topWin.noutrefresh()
 
@@ -387,54 +398,58 @@ def draw_left_win():
     for idx, clog in enumerate(channel_logs):
         # should the guild have *too many channels!*, stop them
         # from spilling over the screen
-        if idx == left_win_height-1:
-            leftWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
-            break
+        try:
+            if idx == left_win_height-1:
+                leftWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
+                break
 
-        # don't print categories or voice chats
-        # TODO: this will break on private messages
-        if isinstance(clog.channel, VoiceChannel) or \
-                isinstance(clog.channel, CategoryChannel):
-            continue
-        text = clog.name
-        length = len(text)
+            # don't print categories or voice chats
+            # TODO: this will break on private messages
+            if isinstance(clog.channel, VoiceChannel) or \
+                    isinstance(clog.channel, CategoryChannel):
+                continue
+            text = clog.name
+            length = len(text)
 
-        offset = 0
-        if gc.settings["number_channels"]:
-            offset = 3
-            if idx >= 9:
-                offset = 4
+            offset = 0
+            if gc.settings["number_channels"]:
+                offset = 3
+                if idx >= 9:
+                    offset = 4
 
-        if length > left_win_width-offset:
-            if gc.settings["truncate_channels"]:
-                text = text[0:left_win_width - offset]
+            if length > left_win_width-offset:
+                if gc.settings["truncate_channels"]:
+                    text = text[0:left_win_width - offset]
+                else:
+                    text = text[0:left_win_width - 3 - offset] + "..."
+
+            leftWin.move(idx,0)
+            if gc.settings["number_channels"]:
+                leftWin.addstr(str(idx+1) + ". ")
+            if clog.channel is gc.client.current_channel:
+                leftWin.addstr(text, gc.ui.colors[gc.settings["current_channel_color"]])
             else:
-                text = text[0:left_win_width - 3 - offset] + "..."
+                if clog.channel is not channel_logs[0]:
+                    pass
 
-        leftWin.move(idx,0)
-        if gc.settings["number_channels"]:
-            leftWin.addstr(str(idx+1) + ". ")
-        if clog.channel is gc.client.current_channel:
-            leftWin.addstr(text, gc.ui.colors[gc.settings["current_channel_color"]])
-        else:
-            if clog.channel is not channel_logs[0]:
-                pass
-
-            if clog.unread and gc.settings["blink_unreads"]:
-                color = gc.settings["unread_channel_color"]
-                if "blink_" in color:
-                    split = color.split("blink_")[1]
-                    color = gc.ui.colors[split]|curses.A_BLINK
-                elif "on_" in color:
-                    color = gc.ui.colors[color.split("on_")[1]]
-                leftWin.addstr(text, color)
-            elif clog.mentioned_in and gc.settings["blink_mentions"]:
-                color = gc.settings["unread_mention_color"]
-                if "blink_" in color:
-                    color = gc.ui.colors[color.split("blink_")[1]]
-                leftWin.addstr(text, color)
-            else:
-                leftWin.addstr(text)
+                if clog.unread and gc.settings["blink_unreads"]:
+                    color = gc.settings["unread_channel_color"]
+                    if "blink_" in color:
+                        split = color.split("blink_")[1]
+                        color = gc.ui.colors[split]|curses.A_BLINK
+                    elif "on_" in color:
+                        color = gc.ui.colors[color.split("on_")[1]]
+                    leftWin.addstr(text, color)
+                elif clog.mentioned_in and gc.settings["blink_mentions"]:
+                    color = gc.settings["unread_mention_color"]
+                    if "blink_" in color:
+                        color = gc.ui.colors[color.split("blink_")[1]]
+                    leftWin.addstr(text, color)
+                else:
+                    leftWin.addstr(text)
+        except Exception as e:
+            # if we're here, text has failed to draw
+            log("Failed to draw left window. Error: {}".format(e))
 
     leftWin.noutrefresh()
 
@@ -445,14 +460,18 @@ def draw_user_win():
     userWin.erase()
 
     for idx,member in enumerate(gc.client.current_channel.members):
-        if idx+2 > height:
-            userWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
-            break
-        name = member.display_name
-        if len(name) >= width:
-            name = name[:width-4] + "..."
+        try:
+            if idx+2 > height:
+                userWin.addstr(idx,0, "(more)", gc.ui.colors["green"])
+                break
+            name = member.display_name
+            if len(name) >= width:
+                name = name[:width-4] + "..."
 
-        userWin.addstr(idx,0, name)
+            userWin.addstr(idx,0, name)
+        except Exception as e:
+            # if we're here, text has failed to draw
+            log("Failed to draw user window. Error: {}".format(e))
 
     userWin.noutrefresh()
 
@@ -473,25 +492,29 @@ def draw_edit_win(update=False):
     promptColor = gc.ui.colors[gc.settings["prompt_color"]]
 
     edit.setPrompt(gc.client.prompt)
-    editWin.erase()
-    editWin.addstr(0,0, "[", borderColor)
-    if not hasHash:
-        editWin.addstr(gc.settings["default_prompt"], promptColor)
-    else:
-        editWin.addstr("#", hashColor)
-        editWin.addstr(promptText, promptColor)
-    editWin.addstr("]: ", borderColor)
     try:
-        text_data, text_data_pos, start_pos = edit.getCurrentData()
-    except:
-        text_data, text_data_pos, start_pos = ('', 0, 0)
-    pos = text_data_pos-start_pos
-    data = (text_data[start_pos:start_pos+width-1], pos)
-    editWin.addstr(0,offset, data[0])
-    editWin.move(0,offset+data[1])
-    editWin.noutrefresh()
-    if update:
-        curses.doupdate()
+        editWin.erase()
+        editWin.addstr(0,0, "[", borderColor)
+        if not hasHash:
+            editWin.addstr(gc.settings["default_prompt"], promptColor)
+        else:
+            editWin.addstr("#", hashColor)
+            editWin.addstr(promptText, promptColor)
+        editWin.addstr("]: ", borderColor)
+        try:
+            text_data, text_data_pos, start_pos = edit.getCurrentData()
+        except:
+            text_data, text_data_pos, start_pos = ('', 0, 0)
+        pos = text_data_pos-start_pos
+        data = (text_data[start_pos:start_pos+width-1], pos)
+        editWin.addstr(0,offset, data[0])
+        editWin.move(0,offset+data[1])
+        editWin.noutrefresh()
+        if update:
+            curses.doupdate()
+    except Exception as e:
+        # if we're here, text has failed to draw
+        log("Failed to draw edit window. Error: {}".format(e))
 
 def draw_guildlist():
     display = gc.ui.displayWin
@@ -924,30 +947,34 @@ def draw_channel_log():
         return
     for idx, line in enumerate(
             lines[gc.ui.channel_log_offset:gc.ui.channel_log_offset+chatWin_height]):
-        if line.isFirst:
-            author_color = get_role_color(line.topRole, gc)
-            chatWin.addstr(idx,0, line.user + ": ", author_color)
-            name_offset = chatWin.getyx()[1]
-        elif name_offset == 0:
-            # if line is at the top and it's not a "user" line
-            for subline in reversed(lines[0:gc.ui.channel_log_offset]):
-                if subline.isFirst:
-                    name_offset = len(subline.user) + 2
-                    break
-        chatWin.move(idx,name_offset)
-        for idy, word in enumerate(line.words):
-            color = 0
-            if "@" + gc.client.current_guild.me.display_name in word.content:
-                color = gc.ui.colors[gc.settings["mention_color"]]
-            if not word.content:
-                continue
-            try:
-                # if the next word attrs are the same
-                if idy < len(line.words)-1 and word.attrs == line.words[idy+1].attrs:
-                    chatWin.addstr(word.content + ' ', word.attrs|color)
-                else:
-                    chatWin.addstr(word.content, word.attrs|color)
-                    chatWin.addstr(' ', curses.A_NORMAL)
-            except:
-                log("Text drawing failed at {}".format(word.content))
-        chatWin.noutrefresh()
+        try:
+            if line.isFirst:
+                author_color = get_role_color(line.topRole, gc)
+                chatWin.addstr(idx,0, line.user + ": ", author_color)
+                name_offset = chatWin.getyx()[1]
+            elif name_offset == 0:
+                # if line is at the top and it's not a "user" line
+                for subline in reversed(lines[0:gc.ui.channel_log_offset]):
+                    if subline.isFirst:
+                        name_offset = len(subline.user) + 2
+                        break
+            chatWin.move(idx,name_offset)
+            for idy, word in enumerate(line.words):
+                color = 0
+                if "@" + gc.client.current_guild.me.display_name in word.content:
+                    color = gc.ui.colors[gc.settings["mention_color"]]
+                if not word.content:
+                    continue
+                try:
+                    # if the next word attrs are the same
+                    if idy < len(line.words)-1 and word.attrs == line.words[idy+1].attrs:
+                        chatWin.addstr(word.content + ' ', word.attrs|color)
+                    else:
+                        chatWin.addstr(word.content, word.attrs|color)
+                        chatWin.addstr(' ', curses.A_NORMAL)
+                except:
+                    log("Text drawing failed at {}".format(word.content))
+            chatWin.noutrefresh()
+        except Exception as e:
+            # if we're here, text has failed to draw
+            log("Failed to draw channel log. Error: {}".format(e))

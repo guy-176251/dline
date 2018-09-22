@@ -9,6 +9,12 @@
 #                                                         #
 # ------------------------------------------------------- #
 
+from dline.utils.version import check_versions
+if not check_versions():
+    print("Please install the correct versions with: " +\
+            "pip install --user -r requirements.txt")
+    quit()
+
 import os
 import asyncio
 import curses
@@ -261,4 +267,5 @@ def main():
     if gc.ui.isInitialized:
         terminate_curses()
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

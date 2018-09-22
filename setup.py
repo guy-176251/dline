@@ -13,7 +13,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='dline',
-    version='2.1.4',
+    version='2.1.5',
     description='A feature-rich terminal discord client',
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -27,7 +27,7 @@ setup(
         'dline.input', 'dline.ui', 'dline.utils'
     ],
     install_requires=requirements,
-    dependency_links=['https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py'],
+    dependency_links=['https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py-1.0.0a'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: End Users/Desktop',

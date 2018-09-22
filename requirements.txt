@@ -1,5 +1,6 @@
 asyncio
 blessings
 pyyaml
-mistletoe == 0.6.2
+mistletoe==0.6.2
+discord.py==1.0.0a
 https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
