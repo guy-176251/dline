@@ -14,14 +14,14 @@ on on my [webpage](http://natosaka.host/dline.html).
 ### Option A: pip (through PyPi)
 
 1. Run  
-    `pip3 install --user dline`
+    `pip3 install --user --process-dependency-link dline`
 
 ### Option B: pip (local repository)
 
 1. Clone repo  
     `git clone https://github.com/NatTupper/dline`
 2. Run  
-    `pip3 install --user .`
+    `pip3 install --user --process-dependency-link .`
 
 ### Option C: Running from the repo folder
 
