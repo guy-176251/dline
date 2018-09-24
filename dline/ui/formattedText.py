@@ -1,3 +1,4 @@
+from datetime import datetime
 import curses
 from collections import deque
 import unicodedata
@@ -26,7 +27,7 @@ class MessageContainer:
         self.lines = lines
 
 class Line:
-    def __init__(self, isFirst=False, user=None, topRole=None):
+    def __init__(self, isFirst=False, user=None, topRole=None, date=None):
         self.words = []
         if isFirst:
             if user is None:
@@ -34,6 +35,7 @@ class Line:
         self.user = user
         self.topRole = topRole
         self.isFirst = isFirst
+        self.date = date
 
     def add(self, token):
         self.words.append(token)
@@ -69,7 +71,11 @@ class FormattedText:
         topRole = ""
         if msg.author.__class__.__name__ == "Member":
             topRole = msg.author.top_role.name.lower()
-        offset = findWidth(name)+2
+        ts_len = 0
+        if gc.settings["timestamps_enabled"]:
+            ts_len = len(datetime.today()\
+                    .strftime(gc.settings["timestamp_format"]))+3
+        offset = ts_len+findWidth(name)+2
         width = gc.ui.chatWinWidth-offset
 
         complete_msg = [msg.clean_content]
@@ -138,7 +144,7 @@ class FormattedText:
                 idx += 1
         #log("wtokens: {}".format(wtokens))
         cpos = 0
-        line = Line(True, name, topRole)
+        line = Line(True, name, topRole, msg.created_at)
         ltokens = []
         for idx,wtoken in enumerate(wtokens):
             wtokenlen = findWidth(wtoken[0])

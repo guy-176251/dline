@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 import curses, curses.panel
 from discord import VoiceChannel, CategoryChannel
 from dline.client.channellog import PrivateChannel
@@ -949,8 +950,16 @@ def draw_channel_log():
             lines[gc.ui.channel_log_offset:gc.ui.channel_log_offset+chatWin_height]):
         try:
             if line.isFirst:
+                ts_str = ""
+                if gc.settings["timestamps_enabled"]:
+                    ts_now = time.time()
+                    ts_offset = datetime.fromtimestamp(ts_now)-\
+                            datetime.utcfromtimestamp(ts_now)
+                    dt = line.date+ts_offset
+                    ts_str = dt.strftime(gc.settings["timestamp_format"]) +\
+                            " - "
                 author_color = get_role_color(line.topRole, gc)
-                chatWin.addstr(idx,0, line.user + ": ", author_color)
+                chatWin.addstr(idx,0, "{}{}: ".format(ts_str, line.user), author_color)
                 name_offset = chatWin.getyx()[1]
             elif name_offset == 0:
                 # if line is at the top and it's not a "user" line

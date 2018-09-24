@@ -75,6 +75,14 @@ scroll_lines: 3
 # Enables logging user messages to a file
 message_log: false
 
+# Enables timestamps
+timestamps_enabled: false
+
+# Timestamp format string
+# See https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior for
+# more info
+timestamp_format: "%H:%M:%S"
+
 # ---------------- COLOR SETTINGS ------------------------------------ #
 # Available colors are: "white", "red", "blue", "black"
 #                       "green", "yellow", "cyan", "magenta"
