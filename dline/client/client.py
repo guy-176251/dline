@@ -270,7 +270,7 @@ class Client(discord.Client):
                 gc.ui.views[str(self.current_channel.id)].formattedText.refresh()
                 draw_screen()
                 return
-            i += 1
+            i -= 1
         log("Could not delete last message")
 
     async def init_channel(self, channel=None):
