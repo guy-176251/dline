@@ -1,11 +1,11 @@
 
 class PrivateGuild:
-    def __init__(self):
+    def __init__(self, me):
         self.name = "Private Messages"
         self.roles = None
         self.emojis = None
         self.channels = None
-        self.me = None
+        self.me = me
         self.members = []
 
     def set_channels(self, channels):
@@ -16,7 +16,6 @@ class PrivateGuild:
             for member in channel.members:
                 if member not in self.members:
                     self.members.append(member)
-        self.me = channels[0].me
 
 # Simple wrapper class to hold a list of ChannelLogs
 class GuildLog():

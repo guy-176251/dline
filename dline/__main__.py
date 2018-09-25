@@ -51,7 +51,7 @@ async def on_ready():
     if gc.settings["default_activity"] is not None:
         await gc.client.set_activity(gc.settings["default_activity"])
 
-    privateGuild = PrivateGuild()
+    privateGuild = PrivateGuild(gc.client.user)
     channels = []
     channel_logs = []
     for idx,channel in enumerate(gc.client.private_channels):
