@@ -127,7 +127,7 @@ def input_handler(text):
                             if m is None:
                                 continue
                             text = text[:m.start()] + '{}' + text[m.end():]
-                            mention = "<@!" + member.id + ">"
+                            mention = "<@!" + str(member.id) + ">"
                             mentions.append(mention)
                             break
             text = text.format(*mentions)
@@ -156,6 +156,8 @@ def parseCommand(command, arg=None):
         elif command == "emojis": ui.draw_emojilist()
         elif command in ("users", "members"): ui.draw_userlist()
         elif command == "nick": change_nick()
+        elif command == "dm": change_guild("private messages")
+        elif command in ("del", "rm"): gc.client.remove_last_message()
         elif command[0] == 'c':
             try:
                 if command[1].isdigit():
@@ -166,13 +168,7 @@ def parseCommand(command, arg=None):
         return
 
     if command in ('guild', 'g', 'server', 's'):
-        prev_guild = gc.client.current_guild
-        gc.client.set_current_guild(arg)
-        if gc.client.current_guild is prev_guild:
-            return
-        log("changed guild")
-        gc.ui.channel_log_offset = -1
-        ui.draw_screen()
+        change_guild(arg)
     elif command in ("channel", 'c'):
         gc.client.current_channel = arg
         gc.ui.channel_log_offset = -1
@@ -211,6 +207,15 @@ def change_nick(arg=None):
             time.sleep(0.1)
     except:
         pass
+
+def change_guild(arg):
+    prev_guild = gc.client.current_guild
+    gc.client.set_current_guild(arg)
+    if gc.client.current_guild is prev_guild:
+        return
+    log("changed guild")
+    gc.ui.channel_log_offset = -1
+    ui.draw_screen()
 
 def parseEmoji(text):
     if gc.client.user.premium:

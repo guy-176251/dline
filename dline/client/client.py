@@ -1,4 +1,5 @@
 import sys
+import time
 import asyncio
 import logging
 import discord
@@ -6,7 +7,7 @@ from dline.client.channellog import PrivateChannel
 from dline.utils.log import log
 from dline.utils.globals import gc, Found, NoChannelsFoundException
 from dline.ui.ui_utils import calc_mutations
-from dline.ui.ui import set_display
+from dline.ui.ui import set_display, draw_screen
 from dline.ui.view import init_view
 
 # inherits from discord.py's Client
@@ -251,6 +252,26 @@ class Client(discord.Client):
     async def send_typing(self, channel):
         if channel.permissions_for(self.current_guild.me).send_messages:
             await super().send_typing(channel)
+
+    def remove_last_message(self):
+        log("Attempting to delete last message")
+        messages = gc.ui.views[str(self.current_channel.id)].formattedText.messages
+        message = None
+        i = len(messages)-1
+        while i >= 0:
+            message = messages[i]
+            if message.author.id == self.user.id:
+                log("Deleting message '{}'".format(message.clean_content))
+                call = (message.delete,)
+                self.async_funcs.append(call)
+                while call in self.async_funcs or \
+                        call[0].__name__ in self.locks:
+                    time.sleep(0.01)
+                gc.ui.views[str(self.current_channel.id)].formattedText.refresh()
+                draw_screen()
+                return
+            i += 1
+        log("Could not delete last message")
 
     async def init_channel(self, channel=None):
         clog = None
