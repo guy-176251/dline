@@ -46,6 +46,16 @@ class Client(discord.Client):
                 self.locks.remove(func.__name__)
             await asyncio.sleep(0.01)
 
+    def wait_until_client_task_completes(self, call):
+        func = call[0]
+        args = []
+        if len(call) > 1:
+            args = call[1:]
+        self.async_funcs.append(call)
+        while call in self.async_funcs or \
+                func.__name__ in self.locks:
+            time.sleep(0.01)
+
     async def on_error(self, event_method, *args, **kwargs):
         import traceback
         log('Ignoring exception in {}'.format(event_method))
@@ -262,11 +272,7 @@ class Client(discord.Client):
             message = messages[i]
             if message.author.id == self.user.id:
                 log("Deleting message '{}'".format(message.clean_content))
-                call = (message.delete,)
-                self.async_funcs.append(call)
-                while call in self.async_funcs or \
-                        call[0].__name__ in self.locks:
-                    time.sleep(0.01)
+                self.wait_until_client_task_completes((message.delete,))
                 gc.ui.views[str(self.current_channel.id)].formattedText.refresh()
                 draw_screen()
                 return

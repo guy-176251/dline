@@ -283,40 +283,17 @@ def draw_screen():
     log("Updating")
     # init current channel if needed
     if gc.client.current_channel not in gc.channels_entered:
-        call = (gc.client.init_channel,gc.client.current_channel)
-        gc.client.async_funcs.append(call)
-        while call in gc.client.async_funcs or \
-                call[0].__name__ in gc.client.locks:
-            time.sleep(0.01)
+        gc.client.wait_until_client_task_completes(\
+                (gc.client.init_channel,gc.client.current_channel))
     if gc.ui.topWinVisible:
-        call = (draw_top_win,)
-        gc.ui_thread.funcs.append(call)
-        while call in gc.ui_thread.funcs or \
-                call[0].__name__ in gc.ui_thread.locks:
-            time.sleep(0.01)
+        gc.ui_thread.wait_until_ui_task_completes((draw_top_win,))
     if gc.ui.leftWinVisible:
-        call = (draw_left_win,)
-        gc.ui_thread.funcs.append(call)
-        while call in gc.ui_thread.funcs or \
-                call[0].__name__ in gc.ui_thread.locks:
-            time.sleep(0.01)
+        gc.ui_thread.wait_until_ui_task_completes((draw_left_win,))
     if gc.ui.userWinVisible:
-        call = (draw_user_win,)
-        gc.ui_thread.funcs.append(call)
-        while call in gc.ui_thread.funcs or \
-                call[0].__name__ in gc.ui_thread.locks:
-            time.sleep(0.01)
+        gc.ui_thread.wait_until_ui_task_completes((draw_user_win,))
     if gc.guild_log_tree is not None:
-        call = (draw_channel_log,)
-        gc.ui_thread.funcs.append(call)
-        while call in gc.ui_thread.funcs or \
-                call[0].__name__ in gc.ui_thread.locks:
-            time.sleep(0.01)
-    call = (draw_edit_win,)
-    gc.ui_thread.funcs.append(call)
-    while call in gc.ui_thread.funcs or \
-            call[0].__name__ in gc.ui_thread.locks:
-        time.sleep(0.01)
+        gc.ui_thread.wait_until_ui_task_completes((draw_channel_log,))
+    gc.ui_thread.wait_until_ui_task_completes((draw_edit_win,))
     curses.doupdate()
 
 def draw_top_win():
@@ -828,6 +805,9 @@ def draw_help(terminateAfter=False):
         [("/guild", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("switch guild - (alias: gld)", 0)],
         [("Note: These commands can now fuzzy-find!", gc.ui.colors["cyan"])],
+        [],
+        [("/dm", gc.ui.colors["yellow"]),
+            ('-', gc.ui.colors["cyan"]), ("switch to private messages", 0)],
         [],
         [("/guilds", gc.ui.colors["yellow"]),
             ('-', gc.ui.colors["cyan"]), ("list available guilds", 0)],

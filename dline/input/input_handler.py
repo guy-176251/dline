@@ -13,11 +13,7 @@ def key_input():
     curses.cbreak()
     curses.noecho()
     editWin = gc.ui.editWin
-    call = (ui.draw_edit_win, True)
-    gc.ui_thread.funcs.append(call)
-    while call in gc.ui_thread.funcs or \
-            call[0].__name__ in gc.ui_thread.locks:
-        time.sleep(0.01)
+    gc.ui_thread.wait_until_ui_task_completes((ui.draw_edit_win, True))
     while not gc.doExit:
         ch = editWin.getch()
         if ch == -1 or not gc.ui.displayPanel.hidden():
@@ -51,11 +47,7 @@ def key_input():
             ch = editWin.getch()
             if ch in (0x7f, ord('\b'), curses.KEY_BACKSPACE):
                 gc.ui.messageEdit.reset()
-                call = (ui.draw_edit_win, True)
-                gc.ui_thread.funcs.append(call)
-                while call in gc.ui_thread.funcs or \
-                        call[0].__name__ in gc.ui_thread.locks:
-                    time.sleep(0.01)
+                gc.ui_thread.wait_until_ui_task_completes((ui.draw_edit_win, True))
             continue
         ret = gc.ui.messageEdit.addKey(ch)
         if ret is not None:
@@ -133,11 +125,8 @@ def input_handler(text):
             text = text.format(*mentions)
         for i in range(0,3):
             try:
-                call = (gc.client.current_channel.send, text)
-                gc.client.async_funcs.append(call)
-                while call in gc.client.async_funcs and \
-                        call[0].__name__ in gc.client.locks:
-                    time.sleep(0.1)
+                gc.client.wait_until_client_task_completes(\
+                        (gc.client.current_channel.send, text))
                 break
             except:
                 time.sleep(3)
@@ -177,11 +166,7 @@ def parseCommand(command, arg=None):
         change_nick(arg)
         return
     elif command in ("game", "activity"):
-        call = (gc.client.set_activity, arg)
-        gc.client.async_funcs.append(call)
-        while call in gc.client.async_funcs or \
-                call[0].__name__ in gc.client.locks:
-            time.sleep(0.1)
+        gc.client.wait_until_client_task_completes((gc.client.set_activity, arg))
     elif command == "file":
         send_file(arg)
     elif command == "status":
@@ -192,19 +177,13 @@ def parseCommand(command, arg=None):
             status = "dnd"
 
         if status in ("online", "offline", "idle", "dnd"):
-            call = (gc.client.set_status, status)
-            gc.client.async_funcs.append(call)
-            while call in gc.client.async_funcs or \
-                    call[0].__name__ in gc.client.locks:
-                time.sleep(0.1)
+            gc.client.wait_until_client_task_completes(\
+                    (gc.client.set_status, status))
 
 def change_nick(arg=None):
     try:
-        call = (gc.client.current_guild.me.edit, {'nick':arg})
-        gc.client.async_funcs.append(call)
-        while call in gc.client.async_funcs or \
-                call[0].__name__ in gc.client.locks:
-            time.sleep(0.1)
+        gc.client.wait_until_client_task_completes(\
+                (gc.client.current_guild.me.edit,{'nick':arg}))
     except:
         pass
 

@@ -45,3 +45,13 @@ class UiThread(threading.Thread):
             except Exception as e:
                 log("Error: {}".format(e))
         log("Exiting UI thread")
+
+    def wait_until_ui_task_completes(self, call):
+        func = call[0]
+        args = []
+        if len(call) > 1:
+            args = call[1:]
+        self.funcs.append(call)
+        while call in self.funcs or \
+                func.__name__ in self.locks:
+            time.sleep(0.01)
