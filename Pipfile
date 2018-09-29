@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+asyncio = "*"
+blessings = "*"
+mistletoe = "==0.6.2"
+PyYAML = "*"
+"discord.py" = {file = "https://github.com/Rapptz/discord.py/archive/rewrite.zip"}
+websockets = "*"
+aiohttp = "==1.0.5"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"

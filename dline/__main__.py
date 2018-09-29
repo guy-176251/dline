@@ -209,6 +209,8 @@ def main():
     parser.add_argument("--config-path", help="Specify a config path")
     parser.add_argument("-v", "--version", help="Print version", \
             action="store_true")
+    parser.add_argument('-b', '--bot', help = 'Specify whether account is a bot account.', action = 'store_true')
+    parser.add_argument('-t', '--token', help = 'Allows you to directly add a token to the script call. Useful for using multiple accounts at the same time.')
 
     args = parser.parse_args()
     # check for legacy config path
@@ -233,7 +235,9 @@ def main():
                 .stdout.decode("utf-8").split('\n')[0].replace("commit ","")
         print("dline at commit {}".format(commit_id[:8]))
         quit()
-    if args.token_path:
+    if args.token:
+        token = args.token
+    elif args.token_path:
         try:
             with open(args.token_path) as f:
                 token = f.read().strip()
@@ -255,12 +259,16 @@ def main():
     if token is None:
         token = get_token()
 
+    if_bot = False
+    if args.bot:
+        if_bot = True
+
     print(gc.term.yellow("Starting..."))
 
     # start the client
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(gc.client.run(token, bot=False))
+        loop.run_until_complete(gc.client.run(token, bot=if_bot))
     except:
         loop.close()
 
