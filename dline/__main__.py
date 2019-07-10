@@ -211,6 +211,7 @@ def main():
             action="store_true")
     parser.add_argument('-b', '--bot', help = 'Specify whether account is a bot account.', action = 'store_true')
     parser.add_argument('-t', '--token', help = 'Allows you to directly add a token to the script call. Useful for using multiple accounts at the same time.')
+    parser.add_argument('--test', help = 'This does not actually do anything.')
 
     args = parser.parse_args()
     # check for legacy config path
